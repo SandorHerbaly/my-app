@@ -1,6 +1,31 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+"use client"
+
+import { Badge } from "@/components/ui/badge"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+
+const orders = [
+  { customer: "Liam Johnson", email: "liam@example.com", type: "Sale", status: "Fulfilled", date: "2023-06-23", amount: "$250.00" },
+  { customer: "Olivia Smith", email: "olivia@example.com", type: "Refund", status: "Declined", date: "2023-06-24", amount: "$150.00" },
+  { customer: "Noah Williams", email: "noah@example.com", type: "Subscription", status: "Fulfilled", date: "2023-06-25", amount: "$350.00" },
+  { customer: "Emma Brown", email: "emma@example.com", type: "Sale", status: "Fulfilled", date: "2023-06-26", amount: "$450.00" },
+  { customer: "Liam Johnson", email: "liam@example.com", type: "Sale", status: "Fulfilled", date: "2023-06-23", amount: "$250.00" },
+  { customer: "Olivia Smith", email: "olivia@example.com", type: "Refund", status: "Declined", date: "2023-06-24", amount: "$150.00" },
+  { customer: "Emma Brown", email: "emma@example.com", type: "Sale", status: "Fulfilled", date: "2023-06-26", amount: "$450.00" },
+];
 
 export function OrderTable() {
   return (
@@ -21,22 +46,27 @@ export function OrderTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow className="bg-accent">
-              <TableCell>
-                <div className="font-medium">Liam Johnson</div>
-                <div className="hidden text-sm text-muted-foreground md:inline">liam@example.com</div>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">Sale</TableCell>
-              <TableCell className="hidden sm:table-cell">
-                <Badge className="text-xs" variant="secondary">Fulfilled</Badge>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">2023-06-23</TableCell>
-              <TableCell className="text-right">$250.00</TableCell>
-            </TableRow>
-            {/* More rows as needed */}
+            {orders.map((order, index) => (
+              <TableRow key={index} className={index === 0 ? "bg-accent" : ""}>
+                <TableCell>
+                  <div className="font-medium">{order.customer}</div>
+                  <div className="hidden text-sm text-muted-foreground md:inline">
+                    {order.email}
+                  </div>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">{order.type}</TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <Badge className="text-xs" variant={order.status === "Fulfilled" ? "secondary" : "outline"}>
+                    {order.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">{order.date}</TableCell>
+                <TableCell className="text-right">{order.amount}</TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </CardContent>
     </Card>
-  );
+  )
 }
