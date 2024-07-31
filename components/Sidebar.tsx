@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, ShoppingCart, Package, Users2, LineChart, Settings, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { TbFileInvoice } from "react-icons/tb"; // Updated import for Invoices icon
+import { LuTable2 } from "react-icons/lu";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -26,9 +28,11 @@ export function Sidebar() {
         {[
           { href: '/dashboard', icon: Home, label: 'Dashboard' },
           { href: '/dashboard/orders', icon: ShoppingCart, label: 'Orders' },
+          { href: '/dashboard/invoices', icon: TbFileInvoice, label: 'Invoices' }, // Updated Invoices icon here
           { href: '/dashboard/products', icon: Package, label: 'Products' },
           { href: '/dashboard/customers', icon: Users2, label: 'Customers' },
           { href: '/dashboard/analytics', icon: LineChart, label: 'Analytics' },
+          { href: '/dashboard/tables', icon: LuTable2, label: 'Tables' } // Added Tables icon
         ].map(({ href, icon: Icon, label }) => (
           <Tooltip key={href}>
             <TooltipTrigger asChild>
