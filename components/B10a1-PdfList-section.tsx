@@ -1,4 +1,7 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { FileIcon } from 'lucide-react';
 
 interface File {
   name: string;
@@ -13,26 +16,28 @@ interface B10a1PdfListSectionProps {
 
 export const B10a1PdfListSection: React.FC<B10a1PdfListSectionProps> = ({ files, onPdfClick, selectedPdf }) => {
   return (
-    <div className="w-1/4 p-4 overflow-auto border-r w-full">
+    <div className="h-[400px]">
       <h3 className="text-lg font-medium mb-4">Uploaded PDF Invoices</h3>
-      {files.length > 0 ? (
-        <ul>
-          {files.map((file, index) => (
-            <li key={index} className="mb-2">
-              <button
-                className={`w-full text-left px-4 py-2 rounded ${
-                  selectedPdf?.name === file.name ? 'bg-blue-100' : 'hover:bg-gray-100'
-                }`}
-                onClick={() => onPdfClick(file)}
-              >
-                {file.name}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No PDF files uploaded yet.</p>
-      )}
+      <ScrollArea className="h-[calc(100%-2rem)]">
+        {files.length > 0 ? (
+          <ul className="space-y-2">
+            {files.map((file, index) => (
+              <li key={index}>
+                <Button
+                  variant={selectedPdf?.name === file.name ? "secondary" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => onPdfClick(file)}
+                >
+                  <FileIcon className="mr-2 h-4 w-4" />
+                  {file.name}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground">No PDF files uploaded yet.</p>
+        )}
+      </ScrollArea>
     </div>
   );
 };

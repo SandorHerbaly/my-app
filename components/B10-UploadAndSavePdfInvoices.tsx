@@ -4,9 +4,11 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc } from "firebase/firestore";
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { FileIcon } from 'lucide-react';
+import { FileIcon, Upload } from 'lucide-react';
 import B10aPdfListWithPreview from './B10a-PdfListWithPreview';
 import { extractTextFromPDF } from '@/lib/pdfToJsonConverter';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface UploadedFile {
   name: string;
@@ -90,23 +92,29 @@ const B10UploadAndSavePdfInvoices: React.FC = () => {
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Upload and save pdf invoices ({uploadedFiles.length})</h2>
-      <input 
-        type="file"
-        ref={fileInputRef}
-        multiple
-        accept=".pdf"
-        onChange={handleFileUpload}
-        className="hidden"
-      />
-      <button 
-        onClick={triggerFileInput}
-        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mb-4"
-      >
-        Upload & save invoices
-      </button>
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Upload and save pdf invoices ({uploadedFiles.length})</h2>
+            <input 
+              type="file"
+              ref={fileInputRef}
+              multiple
+              accept=".pdf"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button onClick={triggerFileInput} className="flex items-center gap-2">
+              <Upload size={16} />
+              Upload & save invoices
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
       <B10aPdfListWithPreview files={uploadedFiles} onFileSelect={handleFileSelect} selectedFile={selectedFile} />
+      
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
