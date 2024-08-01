@@ -1,40 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { storage } from '@/lib/firebase.config';
-import { ref, listAll, getDownloadURL } from "firebase/storage";
-import PdfListSection from '@/components/B10a1-PdfList-section';
-import PdfPreviewSection from '@/components/B10a2-PdfPreview-section';
+import { B10a1PdfListSection } from './B10a1-PdfList-section';
+import B10a2PdfPreviewSection from './B10a2-PdfPreview-section';
 
-const PdfListWithPreview = () => {
-  const [pdfFiles, setPdfFiles] = useState([]);
-  const [selectedPdf, setSelectedPdf] = useState(null);
+interface File {
+  name: string;
+  url: string;
+}
+
+interface B10aPdfListWithPreviewProps {
+  files: File[];
+}
+
+const B10aPdfListWithPreview: React.FC<B10aPdfListWithPreviewProps> = ({ files }) => {
+  const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
 
   useEffect(() => {
-    const fetchPdfFiles = async () => {
-      const storageRef = ref(storage, 'invoices');
-      const result = await listAll(storageRef);
-      const files = await Promise.all(result.items.map(async (itemRef) => {
-        const url = await getDownloadURL(itemRef);
-        return { name: itemRef.name, url };
-      }));
-      setPdfFiles(files);
-      if (files.length > 0) {
-        setSelectedPdf(files[0]); // Set the first PDF as the default selected
-      }
-    };
+    if (files && files.length > 0) {
+      setSelectedPdf(files[0]);
+    }
+  }, [files]);
 
-    fetchPdfFiles();
-  }, []);
-
-  const handlePdfClick = (pdf) => {
+  const handlePdfClick = (pdf: File) => {
     setSelectedPdf(pdf);
   };
 
   return (
-    <div className="flex h-screen">
-      <PdfListSection pdfFiles={pdfFiles} handlePdfClick={handlePdfClick} selectedPdf={selectedPdf} />
-      <PdfPreviewSection selectedPdf={selectedPdf} />
+    <div className="flex mt-4">
+      <B10a1PdfListSection files={files} onPdfClick={handlePdfClick} selectedPdf={selectedPdf} />
+      <B10a2PdfPreviewSection selectedPdf={selectedPdf} />
     </div>
   );
 };
 
-export default PdfListWithPreview;
+export default B10aPdfListWithPreview;
