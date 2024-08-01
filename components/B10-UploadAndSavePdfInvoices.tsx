@@ -4,15 +4,13 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc } from "firebase/firestore";
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { FileIcon } from 'lucide-react';
-import { Viewer, Worker } from '@react-pdf-viewer/core';
-import '@react-pdf-viewer/core/lib/styles/index.css';
-import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import '@react-pdf-viewer/default-layout/lib/styles/index.css';
+import B10aPdfListWithPreview from './B10a-PdfListWithPreview';
+import { extractTextFromPDF } from '@/lib/pdfToJsonConverter';
 
 interface UploadedFile {
   name: string;
   url: string;
+  jsonData?: any;
 }
 
 const B10UploadAndSavePdfInvoices: React.FC = () => {
@@ -49,7 +47,9 @@ const B10UploadAndSavePdfInvoices: React.FC = () => {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       
-      const newFile = { name: file.name, url };
+      const jsonData = await extractTextFromPDF(url);
+      
+      const newFile = { name: file.name, url, jsonData };
       setUploadedFiles(prev => [...prev, newFile]);
       if (!selectedFile) setSelectedFile(newFile);
       
@@ -82,8 +82,6 @@ const B10UploadAndSavePdfInvoices: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const defaultLayoutPluginInstance = defaultLayoutPlugin();
-
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Upload and save pdf invoices ({uploadedFiles.length})</h2>
@@ -101,30 +99,7 @@ const B10UploadAndSavePdfInvoices: React.FC = () => {
       >
         Upload & save invoices
       </button>
-      <div className="flex">
-        <div className="w-1/4 pr-4">
-          <h3 className="text-lg font-medium mb-2">Uploaded PDF Invoices</h3>
-          <ul>
-            {uploadedFiles.map((file, index) => (
-              <li 
-                key={index} 
-                className={`flex items-center mb-2 cursor-pointer ${selectedFile?.name === file.name ? 'font-bold' : ''}`}
-                onClick={() => handleFileSelect(file)}
-              >
-                <FileIcon className="mr-2" />
-                {file.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="w-3/4">
-          {selectedFile && (
-            <Worker workerUrl={`https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js`}>
-              <Viewer fileUrl={selectedFile.url} plugins={[defaultLayoutPluginInstance]} />
-            </Worker>
-          )}
-        </div>
-      </div>
+      <B10aPdfListWithPreview files={uploadedFiles} onFileSelect={handleFileSelect} selectedFile={selectedFile} />
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>

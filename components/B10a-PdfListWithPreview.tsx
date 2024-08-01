@@ -1,33 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { B10a1PdfListSection } from './B10a1-PdfList-section';
 import B10a2PdfPreviewSection from './B10a2-PdfPreview-section';
+import JsonDataDisplay from './JsonDataDisplay';
 
 interface File {
   name: string;
   url: string;
+  jsonData?: any;
 }
 
 interface B10aPdfListWithPreviewProps {
   files: File[];
+  onFileSelect: (file: File) => void;
+  selectedFile: File | null;
 }
 
-const B10aPdfListWithPreview: React.FC<B10aPdfListWithPreviewProps> = ({ files }) => {
-  const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
-
-  useEffect(() => {
-    if (files && files.length > 0 && !selectedPdf) {
-      setSelectedPdf(files[0]);
-    }
-  }, [files, selectedPdf]);
-
-  const handlePdfClick = (pdf: File) => {
-    setSelectedPdf(pdf);
-  };
-
+const B10aPdfListWithPreview: React.FC<B10aPdfListWithPreviewProps> = ({ files, onFileSelect, selectedFile }) => {
   return (
     <div className="flex mt-4">
-      <B10a1PdfListSection files={files} onPdfClick={handlePdfClick} selectedPdf={selectedPdf} />
-      <B10a2PdfPreviewSection selectedPdf={selectedPdf} />
+      <div className="w-1/3 pr-4">
+        <B10a1PdfListSection files={files} onPdfClick={onFileSelect} selectedPdf={selectedFile} />
+        {selectedFile && selectedFile.jsonData && (
+          <JsonDataDisplay jsonData={selectedFile.jsonData} />
+        )}
+      </div>
+      <div className="w-2/3">
+        <B10a2PdfPreviewSection selectedPdf={selectedFile} />
+      </div>
     </div>
   );
 };
