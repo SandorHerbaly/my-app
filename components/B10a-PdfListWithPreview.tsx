@@ -15,10 +15,10 @@ const B10aPdfListWithPreview: React.FC<B10aPdfListWithPreviewProps> = ({ files }
   const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
 
   useEffect(() => {
-    if (files && files.length > 0) {
+    if (files && files.length > 0 && !selectedPdf) {
       setSelectedPdf(files[0]);
     }
-  }, [files]);
+  }, [files, selectedPdf]);
 
   const handlePdfClick = (pdf: File) => {
     setSelectedPdf(pdf);
