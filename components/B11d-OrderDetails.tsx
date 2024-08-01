@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Truck, Copy, CreditCard } from "lucide-react";
 
-export function OrderDetails() {
+export function B11dOrderDetails() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

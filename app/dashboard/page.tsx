@@ -1,7 +1,7 @@
-import { CardOrder } from "@/components/CardOrder";
-import { CardStats } from "@/components/CardStats";
-import { OrderTable } from "@/components/OrderTable";
-import { OrderDetails } from "@/components/OrderDetails";
+import { B09aCardOrder } from "@/components/B09a-CardOrder";
+import { B09bCardStats } from "@/components/B09b-CardStats";
+import { B09cOrderTable } from "@/components/B09c-OrderTable";
+import { B09dOrderDetails } from "@/components/B09d-OrderDetails";
 
 export default function DashboardPage() {
   return (

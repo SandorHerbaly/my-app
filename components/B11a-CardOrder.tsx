@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-export function CardOrder() {
+export function B11aCardOrder() {
   return (
     <Card className="sm:col-span-2">
       <CardHeader className="pb-3">

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { Sidebar } from "@/components/Sidebar";
-import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/A02-Sidebar";
+import { Header } from "@/components/A01-Header";
 
 export default function DashboardLayout({ children }) {
   const [viewportSize, setViewportSize] = useState('desktop');
