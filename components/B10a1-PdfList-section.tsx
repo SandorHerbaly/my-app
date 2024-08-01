@@ -13,7 +13,7 @@ interface B10a1PdfListSectionProps {
 
 export const B10a1PdfListSection: React.FC<B10a1PdfListSectionProps> = ({ files, onPdfClick, selectedPdf }) => {
   return (
-    <div className="w-1/4 p-4 overflow-auto border-r">
+    <div className="w-1/4 p-4 overflow-auto border-r w-full">
       <h3 className="text-lg font-medium mb-4">Uploaded PDF Invoices</h3>
       {files.length > 0 ? (
         <ul>

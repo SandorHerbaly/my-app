@@ -1,7 +1,7 @@
 import React from 'react';
 import { B10a1PdfListSection } from './B10a1-PdfList-section';
 import B10a2PdfPreviewSection from './B10a2-PdfPreview-section';
-import JsonDataDisplay from './JsonDataDisplay';
+import B10a3JsonDataDisplay from './B10a3-JsonDataDisplay';
 
 interface File {
   name: string;
@@ -21,7 +21,7 @@ const B10aPdfListWithPreview: React.FC<B10aPdfListWithPreviewProps> = ({ files, 
       <div className="w-1/3 pr-4">
         <B10a1PdfListSection files={files} onPdfClick={onFileSelect} selectedPdf={selectedFile} />
         {selectedFile && selectedFile.jsonData && (
-          <JsonDataDisplay jsonData={selectedFile.jsonData} />
+          <B10a3JsonDataDisplay jsonData={selectedFile.jsonData} />
         )}
       </div>
       <div className="w-2/3">
