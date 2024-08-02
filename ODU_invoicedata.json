@@ -1,6 +1,4 @@
-import React from 'react';
-
-const fixedJsonData = {
+{
   "szamla_szam": {
     "szla_prefix": "INV",
     "szla_year": "2024",
@@ -63,27 +61,14 @@ const fixedJsonData = {
     "fizetendo_osszeg": 1880392.00
   },
   "szamla_megjegyezesek": "",
-  "szamla_design": {
-    "szamla_lablec": {
-      "elerhetoseg": {
-        "honlap": "https://online.westech.hu",
-        "email": "info@westech.hu",
-        "telefon": "+36 30 148 4883"
-      }
-    },
-    "szamla_fejlec": {
-      "logo": "/public/Westech_invoice_logo.png"
+  "szamla_lablec": {
+    "elerhetoseg": {
+      "honlap": "https://online.westech.hu",
+      "email": "info@westech.hu",
+      "telefon": "+36 30 148 4883"
     }
+  },
+  "szamla_fejlec": {
+    "logo": "/public/Westech_invoice_logo.png"
   }
-};
-
-const B10a3JsonDataDisplay: React.FC = () => {
-  return (
-    <div style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-      <h3 className="text-lg font-medium mb-4">Invoice Data</h3>
-      <pre>{JSON.stringify(fixedJsonData, null, 2)}</pre>
-    </div>
-  );
-};
-
-export default B10a3JsonDataDisplay;
+}
