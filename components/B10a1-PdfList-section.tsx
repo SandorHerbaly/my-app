@@ -17,7 +17,7 @@ interface B10a1PdfListSectionProps {
 export const B10a1PdfListSection: React.FC<B10a1PdfListSectionProps> = ({ files, onPdfClick, selectedPdf }) => {
   return (
     <div className="h-[400px]">
-      <h3 className="text-lg font-medium mb-4">Uploaded PDF Invoices</h3>
+      <h3 className="text-lg font-medium mb-4">PDF Invoices</h3>
       <ScrollArea className="h-[calc(100%-2rem)]">
         {files.length > 0 ? (
           <ul className="space-y-2">

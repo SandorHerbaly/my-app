@@ -25,8 +25,8 @@ const B10aPdfListWithPreview: React.FC<B10aPdfListWithPreviewProps> = ({ files, 
         </CardContent>
       </Card>
       
-      <div className="md:col-span-9 lg:col-span-10 grid gap-6 grid-cols-1 lg:grid-cols-2">
-        <Card className="lg:col-span-1">
+      <div className="md:col-span-9 lg:col-span-10 grid gap-6 grid-cols-1 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
           <CardContent className="p-4">
             <B10a2PdfPreviewSection selectedPdf={selectedFile} />
           </CardContent>
