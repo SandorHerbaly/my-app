@@ -1,12 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { storage, db } from '@/lib/firebase.config';
+import { storage } from '@/lib/firebase.config';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc } from "firebase/firestore";
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { FileIcon, Upload } from 'lucide-react';
 import B10aPdfListWithPreview from './B10a-PdfListWithPreview';
-import { extractTextFromPDF } from '@/lib/pdfToJsonConverter';
+import { extractTextFromPDF, convertTextToJson } from '@/lib/invoiceProcessing/pdfToJson';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -52,10 +51,14 @@ const B10UploadAndSavePdfInvoices: React.FC = () => {
       
       let jsonData;
       try {
-        jsonData = await extractTextFromPDF(url);
+        const textContent = await extractTextFromPDF(file);
+        jsonData = convertTextToJson(textContent);
+        console.log(`Extracted JSON data for ${file.name}:`, jsonData);
+        toast.success(`Data extracted successfully from ${file.name}.`);
       } catch (error) {
-        console.error("Error extracting JSON data from PDF:", error);
+        console.error("Error processing invoice:", error);
         jsonData = null;
+        toast.error(`Failed to extract data from ${file.name}. The file has been uploaded but data extraction failed.`);
       }
       
       const newFile = { name: file.name, url, jsonData };
