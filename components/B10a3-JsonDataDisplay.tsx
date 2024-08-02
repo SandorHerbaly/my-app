@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
 
 const fixedJsonData = {
   "szamla_szam": {
@@ -77,11 +78,24 @@ const fixedJsonData = {
   }
 };
 
-const B10a3JsonDataDisplay: React.FC = () => {
+interface B10a3JsonDataDisplayProps {
+  onClonePreview: (data: any) => void;
+}
+
+const B10a3JsonDataDisplay: React.FC<B10a3JsonDataDisplayProps> = ({ onClonePreview }) => {
+  const handleClonePreview = () => {
+    onClonePreview(fixedJsonData);
+  };
+
   return (
-    <div style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-      <h3 className="text-lg font-medium mb-4">Invoice Data</h3>
-      <pre>{JSON.stringify(fixedJsonData, null, 2)}</pre>
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium">Invoice Data</h3>
+        <Button onClick={handleClonePreview}>Clone Preview</Button>
+      </div>
+      <div style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+        <pre>{JSON.stringify(fixedJsonData, null, 2)}</pre>
+      </div>
     </div>
   );
 };

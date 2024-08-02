@@ -14,9 +14,15 @@ interface B10aPdfListWithPreviewProps {
   files: File[];
   onFileSelect: (file: File) => void;
   selectedFile: File | null;
+  onClonePreview: (data: any) => void;
 }
 
-const B10aPdfListWithPreview: React.FC<B10aPdfListWithPreviewProps> = ({ files, onFileSelect, selectedFile }) => {
+const B10aPdfListWithPreview: React.FC<B10aPdfListWithPreviewProps> = ({ 
+  files, 
+  onFileSelect, 
+  selectedFile, 
+  onClonePreview 
+}) => {
   return (
     <div className="grid gap-6 grid-cols-1 md:grid-cols-12 lg:grid-cols-12">
       <Card className="md:col-span-3 lg:col-span-2">
@@ -32,13 +38,11 @@ const B10aPdfListWithPreview: React.FC<B10aPdfListWithPreviewProps> = ({ files, 
           </CardContent>
         </Card>
         
-        {selectedFile && selectedFile.jsonData && (
-          <Card className="lg:col-span-1">
-            <CardContent className="p-4">
-              <B10a3JsonDataDisplay jsonData={selectedFile.jsonData} />
-            </CardContent>
-          </Card>
-        )}
+        <Card className="lg:col-span-1">
+          <CardContent className="p-4">
+            <B10a3JsonDataDisplay onClonePreview={onClonePreview} jsonData={selectedFile?.jsonData} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
