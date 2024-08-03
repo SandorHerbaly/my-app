@@ -30,8 +30,8 @@ const InvoicePreview: React.FC = () => {
         Nyomtatás
       </button>
       <div className="w-[790px] min-h-[1120px] mx-auto bg-white shadow-lg overflow-hidden flex flex-col">
-        <div className="px-[40px] py-[60px] flex-grow">
-          <div className="border-b border-black pb-2">
+        <div className="px-[38px] py-[60px] flex-grow">
+          <div className="border-b border-black pb-3 style={{borderBottomWidth: '8px'}">
             <Image src="/Westech_invoice_logo.png" alt="WESTech Logo" width={100} height={28} />
           </div>
 
@@ -42,23 +42,23 @@ const InvoicePreview: React.FC = () => {
             <p>Magyarország</p>
           </div>
 
-          <div className="flex justify-between mt-[83px]">
-            <div className="text-[#2487AF] text-[24px] font-semibold">Számla</div>
-            <div className="text-right text-[#2487AF] text-[24px] font-semibold">{invoiceData.szamla_szam.szla_prefix}/{invoiceData.szamla_szam.szla_year}/{invoiceData.szamla_szam.ODU_szamlaszam}</div>
+          <div className="flex justify-between mt-[79px]">
+            <div className="text-[#2487AF] text-[28px] font-semibold">Számla</div>
+            <div className="text-right text-[#2487AF] text-[28px] font-semibold w-full">{invoiceData.szamla_szam.szla_prefix}/{invoiceData.szamla_szam.szla_year}/{invoiceData.szamla_szam.ODU_szamlaszam}</div>
           </div>
 
-          <div className="text-right text-[14px] uppercase mt-[25px] font-semibold ">SZÁMLA SORSZÁM</div>
+          <div className="text-right text-[14px] uppercase mt-[8px] font-semibold ">SZÁMLA SORSZÁM</div>
 
-          <div className="grid grid-cols-2 gap-8 mt-[20px]">
+          <div className="grid grid-cols-2 gap-8 mt-[15px]">
             <div>
-              <h2 className="font-semibold text-[16px] ">KIBOCSÁTÓ</h2>
-              <p className="font-bold mt-[20px] text-[18px]">{invoiceData.kibocsato.cegnev}</p>
-              <div className="mt-[20px] text-[18px]">
+              <h2 className="font-semibold text-[14px] ">KIBOCSÁTÓ</h2>
+              <p className="font-bold mt-[10px] text-[14px]">{invoiceData.kibocsato.cegnev}</p>
+              <div className="mt-[15px] text-[14px]">
                 <p>{invoiceData.kibocsato.cim.telepules}</p>
                 <p>{invoiceData.kibocsato.cim.utca_hsz}</p>
                 <p>{invoiceData.kibocsato.cim.iranyitoszam} {invoiceData.kibocsato.cim.orszag}</p>
               </div>
-              <div className="mt-[20px] text-[18px]">
+              <div className="mt-[12px] text-[14px]">
                 <p>Adószám: {invoiceData.kibocsato.adoszam}</p>
                 <p>Bankszámla: {invoiceData.kibocsato.bankszamla.szamlaszam} ({invoiceData.kibocsato.bankszamla.bank})</p>
               </div>
@@ -68,14 +68,14 @@ const InvoicePreview: React.FC = () => {
               <p className="mt-[4px] text-[18px] ">{invoiceData.kibocsato.I6_szamlaszam}</p>
             </div>
             <div>
-              <h2 className="font-semibold text-[16px]">VEVŐ</h2>
-              <p className="font-bold mt-[20px] text-[18px]">{invoiceData.vevo.cegnev}</p>
-              <div className="mt-[20px] text-[18px]">
+              <h2 className="font-semibold text-[14px]">VEVŐ</h2>
+              <p className="font-bold mt-[10px] text-[14px]">{invoiceData.vevo.cegnev}</p>
+              <div className="mt-[15px] text-[14px]">
                 <p>{invoiceData.vevo.cim.telepules}</p>
                 <p>{invoiceData.vevo.cim.utca_hsz}</p>
                 <p>{invoiceData.vevo.cim.iranyitoszam} {invoiceData.vevo.cim.orszag}</p>
               </div>
-              <p className="mt-[20px] text-[18px]">Adószám: {invoiceData.vevo.adoszam}</p>
+              <p className="mt-[12px] text-[14px]">Adószám: {invoiceData.vevo.adoszam}</p>
               <div className="mt-[20px] text-[18px]">
                 {/* Módosított rész: a dátumokat tartalmazó táblázat */}
                 <table className="w-full">
@@ -180,7 +180,7 @@ const InvoicePreview: React.FC = () => {
         </div>
 
         <footer className="px-[40px] py-2 text-[15px] border-t border-black">
-          <div className="flex justify-between font-bold">
+          <div className="flex justify-between font-semibold">
             <span className="text-[#2487AF]">{invoiceData.szamla_design.szamla_lablec.elerhetoseg.honlap}</span>
             <span className="text-[#2487AF]">{invoiceData.szamla_design.szamla_lablec.elerhetoseg.email}</span>
             <span className="text-black">{invoiceData.szamla_design.szamla_lablec.elerhetoseg.telefon}</span>
