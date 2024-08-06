@@ -32,7 +32,8 @@ const fixedJsonData = {
       "iranyitoszam": "2120",
       "utca_hsz": "Lehár Ferenc utca 54. A. ép."
     },
-    "adoszam": "25349670-2-13"
+    "adoszam": "25349670-2-13",
+    "kozossegi_adoszam": "29205022-2-16"
   },
   "datumok": {
     "szamla_kelte": "2024-07-30",

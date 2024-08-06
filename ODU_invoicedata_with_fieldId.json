@@ -1,0 +1,78 @@
+{
+  "szamla_szam": {
+    "[f-01] szla_prefix": "INV",
+    "[f-02] szla_year": "2024",
+    "[f-03] ODU_szamlaszam": "01507"
+  },
+  "kibocsato": {
+    "[f-04] cegnev": "WESTech HU Kft.",
+    "cim": {
+      "[f-08] orszag": "Magyarország",
+      "[f-05] telepules": "Budapest",
+      "[f-07] iranyitoszam": "1139",
+      "[f-06] utca_hsz": "Váci út 91. IV. emelet"
+    },
+    "[f-09] adoszam": "23807341-2-41",
+    "bankszamla": {
+      "[f-10] szamlaszam": "HU20 1040 2166 5052 7066 8453 1004",
+      "[f-11] bank": "K&H Bank Zrt."
+    },
+    "[f-19] ODU_rendeles_szam": "S02237",
+    "[f-20] I6_rendeles_szam": "COR2400931",
+    "[f-21] I6_szamlaszam": "2401507"
+  },
+  "vevo": {
+    "[f-12] cegnev": "Dronesys Kft.",
+    "cim": {
+      "[f-16] orszag": "Magyarország",
+      "[f-13] telepules": "Dunakeszi",
+      "[f-15] iranyitoszam": "2120",
+      "[f-14] utca_hsz": "Lehár Ferenc utca 54. A. ép."
+    },
+    "[f-17] adoszam": "25349670-2-13",
+    "[f-18] kozossegi_adoszam": "29205022-2-16"
+  },
+  "datumok": {
+    "[f-22] szamla_kelte": "2024-07-30",
+    "[f-23] teljesites_datuma": "2024-07-30",
+    "[f-24] fizetesi_feltetel": "",
+    "[f-25] fizetesi_hatarido": "2024-08-19"
+  },
+  "tetel": [
+    {
+      "[f-26] I6_cikkszam": "GTDJICPFP000015101HU",
+      "[f-27] termek_megnevezes": "DJI Avata 2 Fly More Combo (Three Batteries)",
+      "[f-28] DJI_cikkszam": "CP.FP.00000151.01",
+      "[f-29] EAN": "6941565980120",
+      "[f-30] mennyiseg": 4,
+      "[f-31] egyseg_ar": 370156.00,
+      "[f-32] netto_ar": 1480624.00,
+      "ado": {
+        "[f-33] mertek": "27%",
+        "[f-39] ado_alap": 1480624.00,
+        "[f-34] osszeg": 399768.00
+      },
+      "[f-35] brutto_ar": 1880392.00
+    }
+  ],
+  "osszegek": {
+    "[f-36] netto_osszeg": 1480624.00,
+    "[f-40] ado_osszeg": 399768.00,
+    "[f-37] brutto_osszeg": 1880392.00,
+    "[f-38] fizetendo_osszeg": 1880392.00
+  },
+  "[f-41] szamla_megjegyezesek": "",
+  "szamla_design": {
+    "szamla_lablec": {
+      "elerhetoseg": {
+        "[f-42] honlap": "https://online.westech.hu",
+        "[f-43] email": "info@westech.hu",
+        "[f-44] telefon": "+36 30 148 4883"
+      }
+    },
+    "szamla_fejlec": {
+      "logo": "/public/Westech_invoice_logo.png"
+    }
+  },
+  "[f-45] oldal": "1/2"
+}

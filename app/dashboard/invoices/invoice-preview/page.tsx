@@ -76,6 +76,7 @@ const InvoicePreview: React.FC = () => {
                 <p>{invoiceData.vevo.cim.iranyitoszam} {invoiceData.vevo.cim.orszag}</p>
               </div>
               <p className="mt-[20px] text-[18px]">Adószám: {invoiceData.vevo.adoszam}</p>
+              <p className="text-[18px]">Közösségi adószám: {invoiceData.vevo.kozossegi_adoszam}</p>
               <div className="mt-[20px] text-[18px]">
                 {/* Módosított rész: a dátumokat tartalmazó táblázat */}
                 <table className="w-full">
