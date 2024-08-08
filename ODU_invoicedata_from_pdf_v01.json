@@ -1,0 +1,62 @@
+{
+  "szamla_szam": {
+    "[f-01] szla_prefix": "INV",
+    "[f-02] szla_year": "2024",
+    "[f-03] ODU_szamlaszam": "01508"
+  },
+  "kibocsato": {
+    "[f-04] cegnev": "WESTech HU Kft.",
+    "cim": {
+      "[f-08] orszag": "Magyarország",
+      "[f-05] telepules": "<b>Magyarország  Adószám:   23807341-2-41  Bankszámla:   HU20 1040 2166 5052 7066 8453 1004 -  K&H Bank Zrt.  VEVŐ  Fotoplus Kft Fotoplus Kft  Pécs  Megyeri út 59.  7623</b>",
+      "[f-07] iranyitoszam": "<b>1139</b>",
+      "[f-06] utca_hsz": "<b>WESTech HU Kft.  Budapest  Váci út 91. IV. emelet</b>"
+    },
+    "[f-09] adoszam": "23807341-2-41",
+    "bankszamla": {
+      "[f-10] szamlaszam": "HU20 1040 2166 5052 7066 8453 1004",
+      "[f-11] bank": "K&H Bank Zrt."
+    },
+    "[f-19] ODU_rendeles_szam": "S02247",
+    "[f-20] I6_rendeles_szam": "COR2400942",
+    "[f-21] I6_szamlaszam": ""
+  },
+  "vevo": {
+    "[f-12] cegnev": "",
+    "cim": {
+      "[f-16] orszag": "",
+      "[f-13] telepules": "",
+      "[f-15] iranyitoszam": "",
+      "[f-14] utca_hsz": ""
+    },
+    "[f-17] adoszam": "",
+    "[f-18] kozossegi_adoszam": ""
+  },
+  "datumok": {
+    "[f-22] szamla_kelte": "",
+    "[f-23] teljesites_datuma": "",
+    "[f-24] fizetesi_feltetel": "",
+    "[f-25] fizetesi_hatarido": ""
+  },
+  "tetel": [],
+  "osszegek": {
+    "[f-36] netto_osszeg": 0,
+    "[f-40] ado_osszeg": 0,
+    "[f-37] brutto_osszeg": 0,
+    "[f-38] fizetendo_osszeg": 0
+  },
+  "[f-41] szamla_megjegyezesek": "Megjegyzések:  WESTech HU Kft.  Váci út 91. IV. emelet  Budapest   1139  Magyarország  https://online.westech.hu   |   info@westech.hu   | +36 30 148 4883  Oldal:   1   /   2",
+  "szamla_design": {
+    "szamla_lablec": {
+      "elerhetoseg": {
+        "[f-42] honlap": "",
+        "[f-43] email": "",
+        "[f-44] telefon": ""
+      }
+    },
+    "szamla_fejlec": {
+      "logo": ""
+    }
+  },
+  "[f-45] oldal": ""
+}

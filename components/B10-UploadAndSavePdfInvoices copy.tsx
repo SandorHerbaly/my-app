@@ -5,18 +5,18 @@ import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { FileIcon, Upload } from 'lucide-react';
 import B10aPdfListWithPreview from './B10a-PdfListWithPreview';
-import { extractTextFromPDF, convertTextToJson, InvoiceData } from '@/lib/invoiceProcessing/pdfToJson';
+import { extractTextFromPDF, convertTextToJson } from '@/lib/invoiceProcessing/pdfToJson';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface UploadedFile {
   name: string;
   url: string;
-  jsonData?: InvoiceData;
+  jsonData?: any;
 }
 
 interface B10UploadAndSavePdfInvoicesProps {
-  onClonePreview: (data: InvoiceData) => void;
+  onClonePreview: (data: any) => void;
 }
 
 const B10UploadAndSavePdfInvoices: React.FC<B10UploadAndSavePdfInvoicesProps> = ({ onClonePreview }) => {
@@ -60,13 +60,14 @@ const B10UploadAndSavePdfInvoices: React.FC<B10UploadAndSavePdfInvoicesProps> = 
     await uploadBytes(storageRef, file);
     const url = await getDownloadURL(storageRef);
     
-    let jsonData: InvoiceData | undefined;
+    let jsonData;
     try {
       const textContent = await extractTextFromPDF(file);
       jsonData = convertTextToJson(textContent);
       console.log(`Kinyert JSON adat a ${file.name} fájlhoz:`, jsonData);
     } catch (error) {
       console.error("Hiba a számla feldolgozása során:", error);
+      jsonData = null;
       toast.error(`Nem sikerült kinyerni az adatokat a ${file.name} fájlból. A fájl feltöltésre került, de az adatkinyerés sikertelen volt.`);
     }
     
