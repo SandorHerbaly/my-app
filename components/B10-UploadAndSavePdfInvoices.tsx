@@ -5,26 +5,31 @@ import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { FileIcon, Upload } from 'lucide-react';
 import B10aPdfListWithPreview from './B10a-PdfListWithPreview';
-import { extractTextFromPDF, convertTextToJson, InvoiceData } from '@/lib/invoiceProcessing/pdfToJson';
+import { extractTextFromPDF, convertTextToJson } from '@/lib/invoiceProcessing/pdfToJson';
+import { convertPdfToPng } from '@/lib/invoiceProcessing/pdfToPng';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import B12AssignInvoiceData from './B12-AssignInvoiceData';
+import { useRouter } from 'next/navigation'; // Importáld a useRouter-t
 
 interface UploadedFile {
   name: string;
   url: string;
-  jsonData?: InvoiceData;
+  jsonData?: any;
+  pngUrls: string[];
 }
 
 interface B10UploadAndSavePdfInvoicesProps {
-  onClonePreview: (data: InvoiceData) => void;
+  //onClonePreview: (data: any) => void; // Töröljük a onClonePreview propertyt
 }
 
-const B10UploadAndSavePdfInvoices: React.FC<B10UploadAndSavePdfInvoicesProps> = ({ onClonePreview }) => {
+const B10UploadAndSavePdfInvoices: React.FC<B10UploadAndSavePdfInvoicesProps> = ({} /*onClonePreview*/) => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [duplicateFile, setDuplicateFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter(); // Hozd létre a routert
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -60,17 +65,20 @@ const B10UploadAndSavePdfInvoices: React.FC<B10UploadAndSavePdfInvoicesProps> = 
     await uploadBytes(storageRef, file);
     const url = await getDownloadURL(storageRef);
     
-    let jsonData: InvoiceData | undefined;
+    let jsonData;
+    let pngUrls: string[] = [];
     try {
+      pngUrls = await convertPdfToPng(file);
       const textContent = await extractTextFromPDF(file);
       jsonData = convertTextToJson(textContent);
       console.log(`Kinyert JSON adat a ${file.name} fájlhoz:`, jsonData);
     } catch (error) {
       console.error("Hiba a számla feldolgozása során:", error);
-      toast.error(`Nem sikerült kinyerni az adatokat a ${file.name} fájlból. A fájl feltöltésre került, de az adatkinyerés sikertelen volt.`);
+      jsonData = null;
+      toast.error(`Nem sikerült feldolgozni a ${file.name} fájlt.`);
     }
     
-    return { name: file.name, url, jsonData };
+    return { name: file.name, url, jsonData, pngUrls };
   };
 
   const handleReplaceFile = useCallback(async () => {
@@ -96,6 +104,12 @@ const B10UploadAndSavePdfInvoices: React.FC<B10UploadAndSavePdfInvoicesProps> = 
     fileInputRef.current?.click();
   };
 
+const handleClonePreview = useCallback(async () => {
+  if (selectedFile) {
+    router.push(`/dashboard/invoices/assign-invoice-data?data=${encodeURIComponent(JSON.stringify(selectedFile))}`);
+  }
+}, [selectedFile, router]);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -118,12 +132,15 @@ const B10UploadAndSavePdfInvoices: React.FC<B10UploadAndSavePdfInvoicesProps> = 
         </CardContent>
       </Card>
       
-      <B10aPdfListWithPreview 
-        files={uploadedFiles} 
-        onFileSelect={handleFileSelect} 
-        selectedFile={selectedFile}
-        onClonePreview={onClonePreview}
-      />
+      <div className="grid grid-cols-1 gap-6">
+        <B10aPdfListWithPreview 
+          files={uploadedFiles} 
+          onFileSelect={handleFileSelect} 
+          selectedFile={selectedFile}
+          onClonePreview={handleClonePreview}
+
+        />
+      </div>
       
       <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
         <AlertDialogContent>
