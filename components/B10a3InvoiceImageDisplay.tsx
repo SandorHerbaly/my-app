@@ -3,20 +3,29 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 
 interface B10a3InvoiceImageDisplayProps {
-  onClonePreview: () => void;
-  selectedFile: { pngUrls?: string[] } | null; 
+  selectedFile: { name: string, pngUrls: string[] } | null;
 }
 
-const B10a3InvoiceImageDisplay: React.FC<B10a3InvoiceImageDisplayProps> = ({ onClonePreview, selectedFile }) => {
+const B10a3InvoiceImageDisplay: React.FC<B10a3InvoiceImageDisplayProps> = ({ selectedFile }) => {
   const router = useRouter();
+
+  const handleAssignData = () => {
+    if (selectedFile) {
+      router.push(`/dashboard/invoices/p13-assign-invoice-data?fileName=${selectedFile.name}`);
+    } else {
+      console.error("No file selected");
+    }
+  };
+
+
+
+
 
   return (
     <div className="bg-white rounded-md shadow-md"> 
-      <div className="p-4 flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">Számlakép</h3>
-        <Button onClick={() => onClonePreview()} disabled={!selectedFile?.pngUrls || selectedFile.pngUrls.length === 0}>
-          Adatok kijelölése 
-        </Button>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium">Számla Kép</h3>
+        <Button onClick={handleAssignData} disabled={!selectedFile}>Adatok kijelölése</Button>
       </div>
       <div className="p-4" style={{ maxHeight: '500px', overflowY: 'auto' }}>
         {selectedFile?.pngUrls && selectedFile.pngUrls.length > 0 ? (
