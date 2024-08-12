@@ -1,17 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format, subMonths, startOfMonth, isBefore, isAfter, parse, endOfMonth, isSameMonth } from "date-fns";
+import { hu } from 'date-fns/locale';
 import { CalendarIcon } from "lucide-react";
-import { format, isAfter, isBefore, endOfMonth } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface IntervalCalendarProps {
   startDate: Date | undefined;
   endDate: Date | undefined;
   onStartDateChange: (date: Date | undefined) => void;
   onEndDateChange: (date: Date | undefined) => void;
-  onSearch: () => void; // Új prop a keresés gombhoz
-  isSearchButtonVisible: boolean; // Új prop a gomb állapotának kezeléséhez
+  onSearch: () => void;
+  isSearchButtonVisible: boolean;
+  isLoading: boolean;
 }
 
 const IntervalCalendar: React.FC<IntervalCalendarProps> = ({
@@ -21,78 +25,175 @@ const IntervalCalendar: React.FC<IntervalCalendarProps> = ({
   onEndDateChange,
   onSearch,
   isSearchButtonVisible,
+  isLoading
 }) => {
-  const now = new Date();
+  const today = new Date();
+  const [isStartDateOpen, setIsStartDateOpen] = useState(false);
+  const [isEndDateOpen, setIsEndDateOpen] = useState(false);
+  const [startCalendarDate, setStartCalendarDate] = useState<Date>(startDate || today);
+  const [endCalendarDate, setEndCalendarDate] = useState<Date>(endDate || (startDate ? startDate : today));
+  const selectContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (startDate) {
+      setStartCalendarDate(startDate);
+      setEndCalendarDate(startDate);
+    }
+  }, [startDate]);
+
+  useEffect(() => {
+    if (endDate) setEndCalendarDate(endDate);
+  }, [endDate]);
+
+  const getLastTwelveMonths = (isStartDate: boolean) => {
+    const months = [];
+    for (let i = 0; i < 12; i++) {
+      const date = subMonths(today, i);
+      if (isBefore(date, today) || isSameMonth(date, today)) {
+        const monthEnd = endOfMonth(date);
+        const isDisabled = isStartDate
+          ? false  // Kezdő dátumnál nincs korlátozás
+          : (startDate && isBefore(monthEnd, startDate));
+        months.push({
+          value: format(date, 'yyyy-MM'),
+          label: format(date, 'yyyy. MMMM', { locale: hu }),
+          disabled: isDisabled,
+          isCurrent: isSameMonth(date, today)
+        });
+      }
+    }
+    return months;
+  };
+
+  const handleQuickMonthSelect = (value: string, isStart: boolean) => {
+    const selectedDate = startOfMonth(new Date(value));
+    if (isStart) {
+      setStartCalendarDate(selectedDate);
+    } else {
+      setEndCalendarDate(selectedDate);
+    }
+  };
+
+  const scrollToTop = () => {
+    if (selectContentRef.current) {
+      selectContentRef.current.scrollTop = 0;
+    }
+  };
+
+  useEffect(() => {
+    scrollToTop();
+  }, [isStartDateOpen, isEndDateOpen]);
+
+  const renderSelect = (isStart: boolean) => (
+    <Select onValueChange={(value) => handleQuickMonthSelect(value, isStart)}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Év, hónap választás" />
+      </SelectTrigger>
+      <SelectContent ref={selectContentRef} className="max-h-[200px] overflow-y-auto">
+        {getLastTwelveMonths(isStart).map((month, index) => (
+          <SelectItem 
+            key={month.value} 
+            value={month.value} 
+            disabled={month.disabled}
+            className={cn(
+              month.isCurrent && "font-semibold",
+              "py-2.5"
+            )}
+          >
+            {month.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 
   return (
-    <div className="flex space-x-4 items-end">
-      {/* Kezdő dátum kiválasztása */}
-      <div className="relative">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className="w-[200px] justify-start text-left font-normal"
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {startDate ? (
-                format(startDate, "yyyy. MMMM dd.")
-              ) : (
-                <span>Kezdő dátum</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={startDate}
-              onSelect={onStartDateChange}
-              disabled={(date) => 
-                isAfter(date, now) || (endDate && isAfter(date, endDate))
+    <div className="flex space-x-4">
+      {/* Kezdő dátum választó */}
+      <Popover open={isStartDateOpen} onOpenChange={setIsStartDateOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant={"outline"}
+            className={cn(
+              "w-[240px] justify-start text-left font-normal",
+              !startDate && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {startDate ? format(startDate, "yyyy. MMMM d.", { locale: hu }) : <span>Válassz kezdő dátumot</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          {renderSelect(true)}
+          <Calendar
+            mode="single"
+            selected={startDate}
+            onSelect={(date) => {
+              if (date) {
+                onStartDateChange(date);
+                setEndCalendarDate(date);
+                if (endDate && isBefore(endDate, date)) {
+                  onEndDateChange(undefined);
+                }
               }
-              toDate={endOfMonth(now)}
-              defaultMonth={endDate || now}  // Ha van végdátum, azt használjuk alapértelmezett hónapnak
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-      {/* Végdátum kiválasztása */}
-      <div className="relative">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className="w-[200px] justify-start text-left font-normal"
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {endDate ? (
-                format(endDate, "yyyy. MMMM dd.")
-              ) : (
-                <span>Vég dátum</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={endDate}
-              onSelect={onEndDateChange}
-              disabled={(date) => 
-                isAfter(date, now) || (startDate && isBefore(date, startDate))
+              setIsStartDateOpen(false);
+            }}
+            initialFocus
+            month={startCalendarDate}
+            onMonthChange={setStartCalendarDate}
+            disabled={(date) => isAfter(date, today)}
+            fromMonth={subMonths(today, 11)}
+            toMonth={today}
+            locale={hu}
+          />
+        </PopoverContent>
+      </Popover>
+
+      {/* Vég dátum választó */}
+      <Popover open={isEndDateOpen} onOpenChange={setIsEndDateOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant={"outline"}
+            className={cn(
+              "w-[240px] justify-start text-left font-normal",
+              !endDate && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {endDate ? format(endDate, "yyyy. MMMM d.", { locale: hu }) : <span>Válassz vég dátumot</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          {renderSelect(false)}
+          <Calendar
+            mode="single"
+            selected={endDate}
+            onSelect={(date) => {
+              if (date) {
+                onEndDateChange(date);
               }
-              toDate={endOfMonth(now)}
-              defaultMonth={startDate || now}  // Ha van kezdő dátum, azt használjuk alapértelmezett hónapnak
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
+              setIsEndDateOpen(false);
+            }}
+            initialFocus
+            month={endCalendarDate}
+            onMonthChange={setEndCalendarDate}
+            disabled={(date) => 
+              isAfter(date, today) || 
+              (startDate ? isBefore(date, startDate) : false)
+            }
+            fromMonth={startDate || subMonths(today, 11)}
+            toMonth={today}
+            locale={hu}
+          />
+        </PopoverContent>
+      </Popover>
+
       {/* Keresés gomb */}
       <Button 
-        className="ml-4 mt-0" // Az mt-0 biztosítja, hogy a gomb ne legyen eltolva vertikálisan
         onClick={onSearch} 
-        disabled={!isSearchButtonVisible} // Passzív, amíg nincs mindkét dátum megadva
+        disabled={!isSearchButtonVisible || isLoading}
       >
-        Számlák keresése
+        {isLoading ? 'Keresés...' : 'Keresés'}
       </Button>
     </div>
   );
