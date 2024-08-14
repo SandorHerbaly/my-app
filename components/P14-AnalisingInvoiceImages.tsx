@@ -4,10 +4,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import IntervalCalendar from './P14a-IntervallumCalendar';
-import { storage } from '@/lib/firebase.config';
+import { storage, db } from '@/lib/firebase.config';
 import { ref, listAll, getDownloadURL } from "firebase/storage";
+import { doc, getDoc } from "firebase/firestore"; // Firestore helyes importálása
 import { Checkbox } from "@/components/ui/checkbox";
 import { GrDocumentPdf } from "react-icons/gr";
+import { TbDatabaseImport, TbJson } from "react-icons/tb"; // Ikonok importálása
 import { format } from "date-fns";
 import { toast } from 'sonner';
 import { Progress } from "@/components/ui/progress";
@@ -16,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 interface InvoiceFile {
   name: string;
   url: string;
+  isImported: boolean; // Új mező a Firestore státusz nyomon követésére
 }
 
 export const P14AnalisingInvoiceImages: React.FC = () => {
@@ -30,6 +33,7 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [progressValue, setProgressValue] = useState(0);
+  const [currentFileIndex, setCurrentFileIndex] = useState(0);
 
   useEffect(() => {
     setIsSearchButtonEnabled(!!startDate && !!endDate);
@@ -67,7 +71,11 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
               const fileYearMonth = `${match[1]}_${match[2]}`;
               if (fileYearMonth >= startMonth && fileYearMonth <= endMonth) {
                 const url = await getDownloadURL(item);
-                return { name: fileName, url };
+                // Ellenőrzés a Firestore-ban
+                const docRef = doc(db, 'AI-Invoices', fileName);
+                const docSnap = await getDoc(docRef);
+                const isImported = docSnap.exists();
+                return { name: fileName, url, isImported };
               }
             }
             return null;
@@ -101,48 +109,50 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
     setSelectedFiles(isChecked ? invoiceFiles.map(file => file.name) : []);
   }, [invoiceFiles]);
 
-const handleAnalyze = useCallback(async () => {
-  if (!selectedFiles.length) return;
-  setIsLoading(true);
-  setIsModalOpen(true);
-  setProgressValue(0);
-  console.log(`Starting analysis for ${selectedFiles.length} files`);
+  const handleAnalyze = useCallback(async () => {
+    if (!selectedFiles.length) return;
+    setIsLoading(true);
+    setIsModalOpen(true);
+    setProgressValue(0);
+    setCurrentFileIndex(0);
+    console.log(`Starting analysis for ${selectedFiles.length} files`);
 
-  try {
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const fileName = selectedFiles[i];
-      console.log(`Processing file: ${fileName}`);
-      const response = await fetch('/api/analyze-invoice', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ filename: fileName }),
-      });
-  
-      if (!response.ok) {
-        console.error(`Error response for file ${fileName}: ${response.status} ${response.statusText}`);
-        throw new Error(`HTTP error! status: ${response.status}`);
+    try {
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const fileName = selectedFiles[i];
+        setCurrentFileIndex(i + 1);
+        console.log(`Processing file: ${fileName}`);
+        const response = await fetch('/api/analyze-invoice', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ filename: fileName }),
+        });
+    
+        if (!response.ok) {
+          console.error(`Error response for file ${fileName}: ${response.status} ${response.statusText}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+    
+        const result = await response.json();
+        console.log(`Successfully analyzed file: ${fileName}`);
+    
+        const parsedJson = JSON.parse(result.text);
+        const formattedJson = JSON.stringify(parsedJson, null, 2);
+        console.log('Raw response:', formattedJson);
+    
+        setProgressValue(((i + 1) / selectedFiles.length) * 100);
       }
-  
-      const result = await response.json();
-      console.log(`Successfully analyzed file: ${fileName}`);
-  
-      const parsedJson = JSON.parse(result.text);
-      const formattedJson = JSON.stringify(parsedJson, null, 2);
-      console.log('Raw response:', formattedJson);
-  
-      setProgressValue(((i + 1) / selectedFiles.length) * 100);
+    } catch (error) {
+      console.error("Error analyzing invoices:", error);
+      toast.error('Hiba történt a számlák elemzésekor');
+    } finally {
+      setIsLoading(false);
+      setIsModalOpen(false);
+      console.log('Analysis process completed');
     }
-  } catch (error) {
-    console.error("Error analyzing invoices:", error);
-    toast.error('Hiba történt a számlák elemzésekor');
-  } finally {
-    setIsLoading(false);
-    setIsModalOpen(false);
-    console.log('Analysis process completed');
-  }
-}, [selectedFiles]);
+  }, [selectedFiles]);
 
   return (
     <div className="container mx-auto p-6">
@@ -185,9 +195,8 @@ const handleAnalyze = useCallback(async () => {
                             className="h-5 w-5"
                           />
                         </th>
-                        <th className="px-4 py-2 text-left">
-                          Számlák ({invoiceFiles.length})
-                        </th>
+                        <th className="px-4 py-2 text-left">Számlák ({invoiceFiles.length})</th>
+                        <th className="px-4 py-2 text-left">Státusz</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -209,6 +218,16 @@ const handleAnalyze = useCallback(async () => {
                             <GrDocumentPdf className="h-6 w-6" style={{ color: '#4F617F' }} />
                             <span>{file.name}</span>
                           </td>
+                          <td className="px-4 py-2 align-middle">
+                            {file.isImported ? (
+                              <>
+                                <TbDatabaseImport className="h-6 w-6 inline-block" />
+                                <TbJson className="h-6 w-6 inline-block ml-2" />
+                              </>
+                            ) : (
+                              <span>Feldolgozatlan</span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -229,7 +248,8 @@ const handleAnalyze = useCallback(async () => {
             <DialogTitle>Elemzés folyamatban</DialogTitle>
             <DialogDescription>Kis türelmet, a fájlok elemzése folyamatban van...</DialogDescription>
           </DialogHeader>
-          <Progress value={progressValue} className="mt-4" />
+          <p className="text-center mt-4">{currentFileIndex}/{selectedFiles.length}</p>
+          <Progress value={progressValue} className="mt-2" />
         </DialogContent>
       </Dialog>
     </div>
