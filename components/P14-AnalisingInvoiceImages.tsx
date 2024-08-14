@@ -55,7 +55,7 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
   
       const filteredFiles = await Promise.all(
         fileList.items
-          .filter(item => item.name.endsWith('.png')) // Csak a PNG fájlok szűrése
+          .filter(item => item.name.endsWith('.pdf')) // Csak a PDF fájlok szűrése
           .map(async (item) => {
             const fileName = item.name;
             const match = fileName.match(/INV_(\d{4})_(\d{2})/);
@@ -122,17 +122,33 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
   
           const result = await response.json();
           console.log(`Successfully analyzed file: ${fileName}`);
-          return result;
+          return { fileName, result };
         })
       );
   
       console.log(`Analysis completed for all files`);
-      analyzedInvoices.forEach((response, index) => {
-        if (response?.text) {
-          console.log(`Results for file ${selectedFiles[index]}:`);
-          console.log(response.text);
+      analyzedInvoices.forEach(({ fileName, result }) => {
+        if (result?.text) {
+          console.log(`Results for file ${fileName}:`);
+          try {
+            // Tisztítsuk meg és javítsuk a JSON-t
+            const cleanedJson = result.text
+              .replace(/^\s*```json\s*/, '')  // Eltávolítjuk a kezdő ```json jelölést, ha van
+              .replace(/\s*```\s*$/, '')      // Eltávolítjuk a záró ``` jelölést, ha van
+              .replace(/([{,]\s*)(\w+):/g, '$1"$2":')  // Idézőjelbe tesszük a kulcsokat
+              .replace(/'/g, '"')  // Egyszeres idézőjeleket cseréljük dupla idézőjelekre
+              .replace(/,\s*}/g, '}')  // Eltávolítjuk a felesleges vesszőket az objektumok végéről
+              .trim();
+
+            const parsedJson = JSON.parse(cleanedJson);
+            console.log('Parsed JSON:');
+            console.dir(parsedJson, { depth: null, colors: true });
+          } catch (error) {
+            console.error('Failed to parse JSON, displaying raw string:');
+            console.log(result.text);
+          }
         } else {
-          console.log(`No text found for file ${selectedFiles[index]}`);
+          console.log(`No text found for file ${fileName}`);
         }
       });
   

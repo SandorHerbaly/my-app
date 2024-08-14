@@ -69,32 +69,49 @@ export async function POST(req: NextRequest) {
     const buffer = await response.arrayBuffer();
     console.log(`File downloaded, buffer length: ${buffer.byteLength}`);
 
-    const base64Image = Buffer.from(buffer).toString('base64');
+    let dataToSend: string;
+    let mimeType: string;
 
+    if (filename.endsWith('.pdf')) {
+      mimeType = 'application/pdf';
+      dataToSend = Buffer.from(buffer).toString('base64');
+    } else { 
+      mimeType = 'image/png';
+      dataToSend = Buffer.from(buffer).toString('base64');
+    }
 
-
-    // Számlakép és Json sablon továbbítása Gemini modellnek
     console.log('Sending request to Gemini');
     const result = await model.generateContent([
       {
         inlineData: {
-          data: base64Image,
-          mimeType: 'image/png'
+          data: dataToSend,
+          mimeType: mimeType
         }
       },
       { text: 'Kérlek, generálj egy JSON-t a számla adataival a következő formátumban: {"szamla_szam": ...}' }
     ]);
 
     console.log('Received response from Gemini');
-    const generatedJson = result.response.text();
+    let generatedJson = result.response.text();
+
+    // Tisztítsuk meg és javítsuk a JSON-t
+    generatedJson = generatedJson
+      .replace(/^\s*```json\s*/, '')  // Eltávolítjuk a kezdő ```json jelölést, ha van
+      .replace(/\s*```\s*$/, '')      // Eltávolítjuk a záró ``` jelölést, ha van
+      .replace(/([{,]\s*)(\w+):/g, '$1"$2":')  // Idézőjelbe tesszük a kulcsokat
+      .replace(/'/g, '"')  // Egyszeres idézőjeleket cseréljük dupla idézőjelekre
+      .replace(/,\s*}/g, '}')  // Eltávolítjuk a felesleges vesszőket az objektumok végéről
+      .trim();
 
     try {
+      // Ellenőrizzük, hogy érvényes JSON-e
       const parsedJson = JSON.parse(generatedJson);
-      console.log('Parsed JSON:');
+      console.log('Valid JSON generated:');
       console.log(JSON.stringify(parsedJson, null, 2));
     } catch (error) {
-      console.error('Error parsing JSON. Raw response:');
+      console.error('Invalid JSON generated. Raw response:');
       console.log(generatedJson);
+      throw new Error('Invalid JSON generated');
     }
 
     return NextResponse.json({ text: generatedJson });
