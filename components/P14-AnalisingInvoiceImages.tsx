@@ -9,7 +9,7 @@ import { ref, listAll, getDownloadURL } from "firebase/storage";
 import { Checkbox } from "@/components/ui/checkbox";
 import { GrDocumentPdf } from "react-icons/gr";
 import { format } from "date-fns";
-import { toast } from 'sonner'; // Feltételezve, hogy használod a sonner könyvtárat
+import { toast } from 'sonner';
 
 interface InvoiceFile {
   name: string;
@@ -39,23 +39,23 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
 
   const handleSearch = useCallback(async () => {
     if (!startDate || !endDate) return;
-
+  
     const startMonth = format(startDate, 'yyyy_MM');
     const endMonth = format(endDate, 'yyyy_MM');
-
+  
     setInvoiceFiles([]);
     setIsSearchButtonEnabled(false);
     setHasSearched(true);
     setNoResults(false);
     setIsLoading(true);
-
+  
     try {
       const storageRef = ref(storage, 'invoices');
       const fileList = await listAll(storageRef);
-
+  
       const filteredFiles = await Promise.all(
         fileList.items
-          .filter(item => item.name.endsWith('.pdf'))
+          .filter(item => item.name.endsWith('.png'))
           .map(async (item) => {
             const fileName = item.name;
             const match = fileName.match(/INV_(\d{4})_(\d{2})/);
@@ -69,10 +69,10 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
             return null;
           })
       );
-
+  
       const validFiles = filteredFiles.filter((file): file is InvoiceFile => file !== null);
       setInvoiceFiles(validFiles);
-
+  
       if (validFiles.length === 0) {
         setNoResults(true);
       }
@@ -84,7 +84,7 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
       setIsSearchButtonEnabled(true);
     }
   }, [startDate, endDate]);
-
+  
   const handleFileSelect = useCallback((fileName: string) => {
     setSelectedFiles(prev =>
       prev.includes(fileName)
@@ -100,10 +100,12 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
   const handleAnalyze = useCallback(async () => {
     if (!selectedFiles.length) return;
     setIsLoading(true);
+    console.log(`Starting analysis for ${selectedFiles.length} files`);
   
     try {
       const analyzedInvoices = await Promise.all(
         selectedFiles.map(async (fileName) => {
+          console.log(`Processing file: ${fileName}`);
           const response = await fetch('/api/analyze-invoice', {
             method: 'POST',
             headers: {
@@ -116,15 +118,20 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
   
-          return await response.json();
+          const result = await response.json();
+          console.log(`Successfully analyzed file: ${fileName}`);
+          return { fileName, result };
         })
       );
   
-      analyzedInvoices.forEach(response => {
-        if (response?.text) {
-          console.log(response.text);
-        }
+      console.log(`Analysis completed for all files`);
+      console.group('Analysis Results');
+      analyzedInvoices.forEach(({ fileName, result }) => {
+        console.group(`Results for file ${fileName}:`);
+        console.log(result);
+        console.groupEnd();
       });
+      console.groupEnd();
   
       toast.success('Számlák elemzése sikeres');
     } catch (error) {
@@ -132,6 +139,7 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
       toast.error('Hiba történt a számlák elemzésekor');
     } finally {
       setIsLoading(false);
+      console.log('Analysis process completed');
     }
   }, [selectedFiles]);
 
