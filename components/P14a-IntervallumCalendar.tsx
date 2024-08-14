@@ -89,7 +89,8 @@ const IntervalCalendar: React.FC<IntervalCalendarProps> = ({
       <SelectTrigger className="w-full">
         <SelectValue placeholder="Év, hónap választás" />
       </SelectTrigger>
-      <SelectContent ref={selectContentRef} className="max-h-[200px] overflow-y-auto">
+      {/* Módosítva: A SelectContent max-h értéke 350px-re állítva */}
+      <SelectContent ref={selectContentRef} className="max-h-[350px] overflow-y-auto">
         {getLastTwelveMonths(isStart).map((month, index) => (
           <SelectItem 
             key={month.value} 

@@ -71,6 +71,9 @@ export async function POST(req: NextRequest) {
 
     const base64Image = Buffer.from(buffer).toString('base64');
 
+
+
+    // Számlakép és Json sablon továbbítása Gemini modellnek
     console.log('Sending request to Gemini');
     const result = await model.generateContent([
       {
