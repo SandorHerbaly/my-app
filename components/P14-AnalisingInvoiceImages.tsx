@@ -114,19 +114,20 @@ const handleAnalyze = useCallback(async () => {
         },
         body: JSON.stringify({ filename: fileName }),
       });
-
+  
       if (!response.ok) {
         console.error(`Error response for file ${fileName}: ${response.status} ${response.statusText}`);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+  
       const result = await response.json();
       console.log(`Successfully analyzed file: ${fileName}`);
-      console.log(`Raw response: ${result.text}`); 
+  
+      // Formázott JSON a konzolhoz
+      const parsedJson = JSON.parse(result.text);
+      const formattedJson = JSON.stringify(parsedJson, null, 2);
+      console.log('Raw response:', formattedJson); 
     } 
-
-    console.log(`Analysis completed for all files`);
-    toast.success('Számlák elemzése sikeres');
   } catch (error) {
     console.error("Error analyzing invoices:", error);
     toast.error('Hiba történt a számlák elemzésekor');
@@ -134,6 +135,7 @@ const handleAnalyze = useCallback(async () => {
     setIsLoading(false);
     console.log('Analysis process completed');
   }
+  
 }, [selectedFiles]);
 
   return (
