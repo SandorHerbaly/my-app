@@ -9,7 +9,9 @@ import { ref, listAll, getDownloadURL } from "firebase/storage";
 import { Checkbox } from "@/components/ui/checkbox";
 import { GrDocumentPdf } from "react-icons/gr";
 import { format } from "date-fns";
-import { toast } from 'sonner'; // Feltételezve, hogy használod a sonner könyvtárat
+import { toast } from 'sonner';
+import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface InvoiceFile {
   name: string;
@@ -26,6 +28,8 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
   const [noResults, setNoResults] = useState(false);
   const [isAnalyzeButtonEnabled, setIsAnalyzeButtonEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [progressValue, setProgressValue] = useState(0);
 
   useEffect(() => {
     setIsSearchButtonEnabled(!!startDate && !!endDate);
@@ -55,7 +59,7 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
   
       const filteredFiles = await Promise.all(
         fileList.items
-          .filter(item => item.name.endsWith('.pdf')) // Csak a PDF fájlok szűrése
+          .filter(item => item.name.endsWith('.pdf'))
           .map(async (item) => {
             const fileName = item.name;
             const match = fileName.match(/INV_(\d{4})_(\d{2})/);
@@ -84,7 +88,6 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
       setIsSearchButtonEnabled(true);
     }
   }, [startDate, endDate]);
-  
 
   const handleFileSelect = useCallback((fileName: string) => {
     setSelectedFiles(prev =>
@@ -101,11 +104,13 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
 const handleAnalyze = useCallback(async () => {
   if (!selectedFiles.length) return;
   setIsLoading(true);
+  setIsModalOpen(true);
+  setProgressValue(0);
   console.log(`Starting analysis for ${selectedFiles.length} files`);
 
   try {
-    // Így kell módosítani a handleAnalyze függvényt:
-    for (const fileName of selectedFiles) { 
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const fileName = selectedFiles[i];
       console.log(`Processing file: ${fileName}`);
       const response = await fetch('/api/analyze-invoice', {
         method: 'POST',
@@ -123,19 +128,20 @@ const handleAnalyze = useCallback(async () => {
       const result = await response.json();
       console.log(`Successfully analyzed file: ${fileName}`);
   
-      // Formázott JSON a konzolhoz
       const parsedJson = JSON.parse(result.text);
       const formattedJson = JSON.stringify(parsedJson, null, 2);
-      console.log('Raw response:', formattedJson); 
-    } 
+      console.log('Raw response:', formattedJson);
+  
+      setProgressValue(((i + 1) / selectedFiles.length) * 100);
+    }
   } catch (error) {
     console.error("Error analyzing invoices:", error);
     toast.error('Hiba történt a számlák elemzésekor');
   } finally {
     setIsLoading(false);
+    setIsModalOpen(false);
     console.log('Analysis process completed');
   }
-  
 }, [selectedFiles]);
 
   return (
@@ -215,6 +221,17 @@ const handleAnalyze = useCallback(async () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal a progress bar megjelenítéséhez */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elemzés folyamatban</DialogTitle>
+            <DialogDescription>Kis türelmet, a fájlok elemzése folyamatban van...</DialogDescription>
+          </DialogHeader>
+          <Progress value={progressValue} className="mt-4" />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
