@@ -37,3 +37,9 @@ next-env.d.ts
 
 # google visoin services key
 credentials/vision-service-account.json
+
+# google gemini service account key
+credentials/gemini-sa.json
+
+# google Firebase service accont key
+credentials/FireBase-SA-key.json

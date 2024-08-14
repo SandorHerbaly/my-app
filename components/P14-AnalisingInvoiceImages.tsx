@@ -39,23 +39,23 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
 
   const handleSearch = useCallback(async () => {
     if (!startDate || !endDate) return;
-
+  
     const startMonth = format(startDate, 'yyyy_MM');
     const endMonth = format(endDate, 'yyyy_MM');
-
+  
     setInvoiceFiles([]);
     setIsSearchButtonEnabled(false);
     setHasSearched(true);
     setNoResults(false);
     setIsLoading(true);
-
+  
     try {
       const storageRef = ref(storage, 'invoices');
       const fileList = await listAll(storageRef);
-
+  
       const filteredFiles = await Promise.all(
         fileList.items
-          .filter(item => item.name.endsWith('.pdf'))
+          .filter(item => item.name.endsWith('.png')) // Csak a PNG fájlok szűrése
           .map(async (item) => {
             const fileName = item.name;
             const match = fileName.match(/INV_(\d{4})_(\d{2})/);
@@ -69,10 +69,10 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
             return null;
           })
       );
-
+  
       const validFiles = filteredFiles.filter((file): file is InvoiceFile => file !== null);
       setInvoiceFiles(validFiles);
-
+  
       if (validFiles.length === 0) {
         setNoResults(true);
       }
@@ -84,6 +84,7 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
       setIsSearchButtonEnabled(true);
     }
   }, [startDate, endDate]);
+  
 
   const handleFileSelect = useCallback((fileName: string) => {
     setSelectedFiles(prev =>
@@ -100,10 +101,12 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
   const handleAnalyze = useCallback(async () => {
     if (!selectedFiles.length) return;
     setIsLoading(true);
+    console.log(`Starting analysis for ${selectedFiles.length} files`);
   
     try {
       const analyzedInvoices = await Promise.all(
         selectedFiles.map(async (fileName) => {
+          console.log(`Processing file: ${fileName}`);
           const response = await fetch('/api/analyze-invoice', {
             method: 'POST',
             headers: {
@@ -113,16 +116,23 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
           });
   
           if (!response.ok) {
+            console.error(`Error response for file ${fileName}: ${response.status} ${response.statusText}`);
             throw new Error(`HTTP error! status: ${response.status}`);
           }
   
-          return await response.json();
+          const result = await response.json();
+          console.log(`Successfully analyzed file: ${fileName}`);
+          return result;
         })
       );
   
-      analyzedInvoices.forEach(response => {
+      console.log(`Analysis completed for all files`);
+      analyzedInvoices.forEach((response, index) => {
         if (response?.text) {
+          console.log(`Results for file ${selectedFiles[index]}:`);
           console.log(response.text);
+        } else {
+          console.log(`No text found for file ${selectedFiles[index]}`);
         }
       });
   
@@ -132,6 +142,7 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
       toast.error('Hiba történt a számlák elemzésekor');
     } finally {
       setIsLoading(false);
+      console.log('Analysis process completed');
     }
   }, [selectedFiles]);
 
