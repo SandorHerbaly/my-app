@@ -98,69 +98,43 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
     setSelectedFiles(isChecked ? invoiceFiles.map(file => file.name) : []);
   }, [invoiceFiles]);
 
-  const handleAnalyze = useCallback(async () => {
-    if (!selectedFiles.length) return;
-    setIsLoading(true);
-    console.log(`Starting analysis for ${selectedFiles.length} files`);
-  
-    try {
-      const analyzedInvoices = await Promise.all(
-        selectedFiles.map(async (fileName) => {
-          console.log(`Processing file: ${fileName}`);
-          const response = await fetch('/api/analyze-invoice', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ filename: fileName }),
-          });
-  
-          if (!response.ok) {
-            console.error(`Error response for file ${fileName}: ${response.status} ${response.statusText}`);
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-  
-          const result = await response.json();
-          console.log(`Successfully analyzed file: ${fileName}`);
-          return { fileName, result };
-        })
-      );
-  
-      console.log(`Analysis completed for all files`);
-      analyzedInvoices.forEach(({ fileName, result }) => {
-        if (result?.text) {
-          console.log(`Results for file ${fileName}:`);
-          try {
-            // Tisztítsuk meg és javítsuk a JSON-t
-            const cleanedJson = result.text
-              .replace(/^\s*```json\s*/, '')  // Eltávolítjuk a kezdő ```json jelölést, ha van
-              .replace(/\s*```\s*$/, '')      // Eltávolítjuk a záró ``` jelölést, ha van
-              .replace(/([{,]\s*)(\w+):/g, '$1"$2":')  // Idézőjelbe tesszük a kulcsokat
-              .replace(/'/g, '"')  // Egyszeres idézőjeleket cseréljük dupla idézőjelekre
-              .replace(/,\s*}/g, '}')  // Eltávolítjuk a felesleges vesszőket az objektumok végéről
-              .trim();
+const handleAnalyze = useCallback(async () => {
+  if (!selectedFiles.length) return;
+  setIsLoading(true);
+  console.log(`Starting analysis for ${selectedFiles.length} files`);
 
-            const parsedJson = JSON.parse(cleanedJson);
-            console.log('Parsed JSON:');
-            console.dir(parsedJson, { depth: null, colors: true });
-          } catch (error) {
-            console.error('Failed to parse JSON, displaying raw string:');
-            console.log(result.text);
-          }
-        } else {
-          console.log(`No text found for file ${fileName}`);
-        }
+  try {
+    // Így kell módosítani a handleAnalyze függvényt:
+    for (const fileName of selectedFiles) { 
+      console.log(`Processing file: ${fileName}`);
+      const response = await fetch('/api/analyze-invoice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filename: fileName }),
       });
-  
-      toast.success('Számlák elemzése sikeres');
-    } catch (error) {
-      console.error("Error analyzing invoices:", error);
-      toast.error('Hiba történt a számlák elemzésekor');
-    } finally {
-      setIsLoading(false);
-      console.log('Analysis process completed');
-    }
-  }, [selectedFiles]);
+
+      if (!response.ok) {
+        console.error(`Error response for file ${fileName}: ${response.status} ${response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log(`Successfully analyzed file: ${fileName}`);
+      console.log(`Raw response: ${result.text}`); 
+    } 
+
+    console.log(`Analysis completed for all files`);
+    toast.success('Számlák elemzése sikeres');
+  } catch (error) {
+    console.error("Error analyzing invoices:", error);
+    toast.error('Hiba történt a számlák elemzésekor');
+  } finally {
+    setIsLoading(false);
+    console.log('Analysis process completed');
+  }
+}, [selectedFiles]);
 
   return (
     <div className="container mx-auto p-6">
