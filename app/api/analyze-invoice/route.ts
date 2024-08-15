@@ -177,8 +177,6 @@ export async function POST(req: NextRequest) {
               }
             },
             "[f-46] oldal": "A kettőspont utáni string",
-            "[f-47] üres mezők száma": "Ide kéne írni, hogy a 46 mezőből hány üres van, tehát az olyan mezők száma, ahol a mezőben nincs adat.",
-            "[f-48] üres mezők elnevezése": "Fel kellene itt sorolni az üres mezők neveit."
           }
 
           Return the filled JSON template with the extracted data from the provided invoice.

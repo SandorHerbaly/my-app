@@ -13,6 +13,24 @@ interface DetailedComparisonDialogProps {
   onSave: (updatedGeminiData: string, allCorrect: boolean) => void;
 }
 
+// Új függvény a dinamikus értéklekéréshez az objektumból
+const getValueByPath = (obj: any, path: string) => {
+  return path.split('.').reduce((acc, part) => {
+    // Távolítsuk el az esetleges felesleges szóközöket
+    part = part.trim();
+    // Ha a rész egy kulcs, de nem tartalmazza a [ ] karaktereket, akkor egyszerűen használjuk a kulcsot
+    if (acc && acc[part]) {
+      return acc[part];
+    }
+    // Ellenőrizzük, hogy van-e kulcs a négyzetes zárójelekben
+    const match = part.match(/\[([^\]]+)\]/);
+    if (match && acc) {
+      return acc[match[1]];
+    }
+    return undefined;
+  }, obj);
+};
+
 export const P14b1DetailedComparisonDialog: React.FC<DetailedComparisonDialogProps> = ({
   isOpen,
   onClose,
@@ -29,18 +47,25 @@ export const P14b1DetailedComparisonDialog: React.FC<DetailedComparisonDialogPro
   const rightScrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setSelectedField(null); // Megnyitáskor nullázza a kijelölt mezőt
+
     try {
       const parsedData = JSON.parse(geminiData);
-      // Remove f-001, f-47, and f-48 fields
-      delete parsedData['[f-001]'];
-      delete parsedData['[f-47]'];
-      delete parsedData['[f-48]'];
-      setEditableGeminiData(parsedData);
-      compareDatas(parsedData);
+      // Remove f-001, f-47, and f-48 fields and sort the remaining fields
+      const orderedData = Object.keys(parsedData)
+        .filter(key => !['[f-001]', '[f-47]', '[f-48]'].includes(key))
+        .sort() // Sort keys
+        .reduce((obj, key) => {
+          obj[key] = parsedData[key];
+          return obj;
+        }, {} as any);
+      
+      setEditableGeminiData(orderedData);
+      compareDatas(orderedData);
     } catch (error) {
       console.error("Error parsing Gemini data:", error);
     }
-  }, [geminiData, pdfTextData]);
+  }, [geminiData, pdfTextData, isOpen]);
 
   const compareDatas = (parsedData: any) => {
     const diffs: string[] = [];
@@ -60,7 +85,7 @@ export const P14b1DetailedComparisonDialog: React.FC<DetailedComparisonDialogPro
   const handleSaveEdit = () => {
     if (editingField) {
       const keys = editingField.split('.');
-      let current = {...editableGeminiData};
+      let current = { ...editableGeminiData };
       for (let i = 0; i < keys.length - 1; i++) {
         if (!current[keys[i]]) current[keys[i]] = {};
         current = current[keys[i]];
@@ -81,17 +106,39 @@ export const P14b1DetailedComparisonDialog: React.FC<DetailedComparisonDialogPro
 
   const scrollToMatchingText = (text: string) => {
     if (rightScrollAreaRef.current) {
-      const content = rightScrollAreaRef.current.innerHTML;
-      const index = content.indexOf(text);
+      let content = rightScrollAreaRef.current.textContent || '';
+      let index = content.indexOf(text);
+
       if (index !== -1) {
         const range = document.createRange();
-        const startNode = rightScrollAreaRef.current.firstChild;
-        range.setStart(startNode!, index);
-        range.setEnd(startNode!, index + text.length);
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-        range.startContainer.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        let startNode: ChildNode | null = rightScrollAreaRef.current.firstChild;
+
+        while (startNode) {
+          if (startNode.nodeType === Node.TEXT_NODE) {
+            const nodeText = startNode.textContent || '';
+            const nodeLength = nodeText.length;
+
+            if (index < nodeLength) {
+              if (index + text.length <= nodeLength) {
+                range.setStart(startNode, index);
+                range.setEnd(startNode, index + text.length);
+                const selection = window.getSelection();
+                selection?.removeAllRanges();
+                selection?.addRange(range);
+                range.startContainer.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+              } else {
+                console.warn("Index and text length exceed the node's length");
+                return;
+              }
+            } else {
+              index -= nodeLength;
+            }
+          }
+          startNode = startNode.nextSibling;
+        }
+      } else {
+        console.warn("Text not found in content");
       }
     }
   };
@@ -100,7 +147,7 @@ export const P14b1DetailedComparisonDialog: React.FC<DetailedComparisonDialogPro
     return Object.entries(data).map(([key, value]) => {
       const fullKey = prefix ? `${prefix}.${key}` : key;
       const isDifferent = differences.includes(fullKey);
-      
+
       if (typeof value === 'object' && value !== null) {
         return (
           <div key={fullKey} className="ml-4">
@@ -124,7 +171,7 @@ export const P14b1DetailedComparisonDialog: React.FC<DetailedComparisonDialogPro
                 rows={2}
               />
               <p className="text-sm text-gray-500 mt-1">Javaslat: {correctValue}</p>
-              <Button 
+              <Button
                 onClick={handleSaveEdit}
                 className="mt-2"
               >
@@ -132,15 +179,11 @@ export const P14b1DetailedComparisonDialog: React.FC<DetailedComparisonDialogPro
               </Button>
             </div>
           ) : (
-            <span 
-              className={`font-semibold ${isDifferent ? 'text-red-500 cursor-pointer' : ''} hover:underline ${selectedField === fullKey ? 'underline' : ''}`}
+            <span
+              className={`font-semibold cursor-pointer ${isDifferent ? 'text-red-500' : ''} ${selectedField === fullKey ? 'underline font-bold' : ''} hover:underline`}
               onClick={() => {
-                if (isDifferent) {
-                  handleEdit(fullKey, correctValue);
-                } else {
-                  setSelectedField(fullKey);
-                  scrollToMatchingText(value as string);
-                }
+                setSelectedField(fullKey);
+                scrollToMatchingText(value as string);
               }}
             >
               {value as string}
@@ -152,24 +195,26 @@ export const P14b1DetailedComparisonDialog: React.FC<DetailedComparisonDialogPro
   };
 
   const renderPdfText = () => {
-    return pdfTextData.split('\n').map((line, index) => (
-      <p key={index} className="mb-1">
-        {line.split(' ').map((word, wordIndex) => {
-          const isHighlighted = selectedField && editableGeminiData[selectedField] === word;
-          const isDifferent = Object.entries(editableGeminiData).some(([key, value]) => 
-            differences.includes(key) && typeof value === 'string' && value.includes(word)
-          );
-          return (
-            <span
-              key={wordIndex}
-              className={`${isHighlighted ? 'font-bold text-black' : ''} ${isDifferent ? 'font-bold text-green-600' : ''}`}
-            >
-              {word}{' '}
-            </span>
-          );
-        })}
-      </p>
-    ));
+    const selectedText = selectedField ? getValueByPath(editableGeminiData, selectedField) : '';
+
+    return pdfTextData.split('\n').map((line, index) => {
+      const cleanLine = line.trim().toLowerCase();
+      const cleanSelectedText = selectedText.trim().toLowerCase();
+
+      const isHighlighted = cleanLine.includes(cleanSelectedText);
+
+      return (
+        <p key={index} className="mb-1">
+          <span
+            className={`${
+              isHighlighted ? 'font-semibold text-black bg-[#64FF2D]' : ''
+            }`}
+          >
+            {line}
+          </span>
+        </p>
+      );
+    });
   };
 
   const handleSave = () => {
