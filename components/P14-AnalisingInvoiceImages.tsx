@@ -6,19 +6,19 @@ import { Button } from "@/components/ui/button";
 import IntervalCalendar from './P14a-IntervallumCalendar';
 import { storage, db } from '@/lib/firebase.config';
 import { ref, listAll, getDownloadURL } from "firebase/storage";
-import { doc, getDoc } from "firebase/firestore"; // Firestore helyes importálása
+import { doc, getDoc } from "firebase/firestore";
 import { Checkbox } from "@/components/ui/checkbox";
 import { GrDocumentPdf } from "react-icons/gr";
-import { TbDatabaseImport, TbJson } from "react-icons/tb"; // Ikonok importálása
 import { format } from "date-fns";
 import { toast } from 'sonner';
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { P14b } from './P14b-InvoiceDataVerification';
 
 interface InvoiceFile {
   name: string;
   url: string;
-  isImported: boolean; // Új mező a Firestore státusz nyomon követésére
+  isImported: boolean;
 }
 
 export const P14AnalisingInvoiceImages: React.FC = () => {
@@ -71,7 +71,6 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
               const fileYearMonth = `${match[1]}_${match[2]}`;
               if (fileYearMonth >= startMonth && fileYearMonth <= endMonth) {
                 const url = await getDownloadURL(item);
-                // Ellenőrzés a Firestore-ban
                 const docRef = doc(db, 'AI-Invoices', fileName);
                 const docSnap = await getDoc(docRef);
                 const isImported = docSnap.exists();
@@ -219,14 +218,10 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
                             <span>{file.name}</span>
                           </td>
                           <td className="px-4 py-2 align-middle">
-                            {file.isImported ? (
-                              <>
-                                <TbDatabaseImport className="h-6 w-6 inline-block" />
-                                <TbJson className="h-6 w-6 inline-block ml-2" />
-                              </>
-                            ) : (
-                              <span>Feldolgozatlan</span>
-                            )}
+                            <P14b 
+                              fileName={file.name}
+                              isImported={file.isImported}
+                            />
                           </td>
                         </tr>
                       ))}
@@ -241,7 +236,6 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Modal a progress bar megjelenítéséhez */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
