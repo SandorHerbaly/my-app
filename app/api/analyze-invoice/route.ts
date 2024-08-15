@@ -7,7 +7,6 @@ import path from 'path';
 
 console.log('Starting analyze-invoice route');
 
-// Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
   console.log('Initializing Firebase Admin');
   try {
@@ -27,10 +26,8 @@ if (!admin.apps.length) {
   }
 }
 
-// Initialize Firestore
 const firestore = admin.firestore();
 
-// Initialize Gemini API
 console.log('Initializing GoogleGenerativeAI');
 console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? 'Set' : 'Not set');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -87,9 +84,11 @@ export async function POST(req: NextRequest) {
       },
       { 
         text: `
-          I have the following JSON template that I want you to fill with data extracted from the provided invoice document. Please extract the required fields as described in the template. If you cannot extract a particular field, please leave it empty or mark it as "N/A". Continue with the next field without stopping if any errors occur:
+          Extract the full text content from the provided invoice document. 
+          Then, fill the following JSON template with the extracted data:
 
           {
+            "[f-001] pdf-text": "Full extracted text goes here",
             "szamla_szam": {
               "[f-01] szla_prefix": "",
               "[f-02] szla_year": "",
@@ -190,20 +189,18 @@ export async function POST(req: NextRequest) {
     console.log('Received response from Gemini');
     let generatedJson = result.response.text();
 
-    // Clean up the JSON string to avoid any parsing errors
     generatedJson = generatedJson
-      .replace(/^\s*```json\s*/, '')  // Remove the starting ```json if exists
-      .replace(/\s*```\s*$/, '')      // Remove the ending ``` if exists
-      .replace(/\n/g, '')             // Remove all newline characters
-      .replace(/\s{2,}/g, ' ')        // Replace multiple spaces with a single space
-      .replace(/,(?=\s*})/g, '')      // Remove trailing commas before closing braces
+      .replace(/^\s*```json\s*/, '')
+      .replace(/\s*```\s*$/, '')
+      .replace(/\n/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/,(?=\s*})/g, '')
       .trim();
 
     try {
       const parsedJson = JSON.parse(generatedJson);
       console.log('Valid JSON generated:', JSON.stringify(parsedJson, null, 2));
 
-      // Save to Firestore
       const docRef = firestore.collection('AI-Invoices').doc(filename);
       await docRef.set(parsedJson);
       console.log('JSON saved to Firestore');
@@ -218,4 +215,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to analyze invoice', details: error.message }, { status: 500 });
   }
 }
-

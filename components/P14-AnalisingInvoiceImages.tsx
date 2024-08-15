@@ -19,6 +19,7 @@ interface InvoiceFile {
   name: string;
   url: string;
   isImported: boolean;
+  verificationStatus: 'pending' | 'verified' | 'error';
 }
 
 export const P14AnalisingInvoiceImages: React.FC = () => {
@@ -221,6 +222,7 @@ export const P14AnalisingInvoiceImages: React.FC = () => {
                             <P14b 
                               fileName={file.name}
                               isImported={file.isImported}
+                              verificationStatus={file.verificationStatus}
                             />
                           </td>
                         </tr>

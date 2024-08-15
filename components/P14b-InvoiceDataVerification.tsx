@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TbDatabaseImport, TbJson } from "react-icons/tb";
 import { Button } from "@/components/ui/button";
 import { P14b1DetailedComparisonDialog } from './P14b1-DetailedComparisonDialog';
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from '@/lib/firebase.config';
 
 interface P14bProps {
@@ -30,9 +30,8 @@ export const P14b: React.FC<P14bProps> = ({ fileName, isImported }) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setGeminiData(JSON.stringify(data, null, 2));
-        // Itt kellene lekérni a PDF szövegét is, ha van ilyen funkció
-        setPdfTextData("PDF szöveg még nem elérhető"); // Placeholder
-        setVerificationStatus(Math.random() > 0.5 ? 'verified' : 'error');
+        setPdfTextData(data['[f-001] pdf-text'] || 'PDF szöveg nem elérhető');
+        setVerificationStatus(data.verificationStatus || 'pending');
       } else {
         console.log("No such document!");
         setVerificationStatus('error');
@@ -52,11 +51,20 @@ export const P14b: React.FC<P14bProps> = ({ fileName, isImported }) => {
     }
   };
 
-  const handleSave = (updatedGeminiData: string) => {
-    // Itt kellene implementálni a frissített adatok mentését Firestore-ba
-    console.log("Saving updated data:", updatedGeminiData);
-    setGeminiData(updatedGeminiData);
-    setVerificationStatus('verified');
+  const handleSave = async (updatedGeminiData: string) => {
+    try {
+      const docRef = doc(db, 'AI-Invoices', fileName);
+      const updatedData = JSON.parse(updatedGeminiData);
+      await updateDoc(docRef, {
+        ...updatedData,
+        verificationStatus: 'verified'
+      });
+      setVerificationStatus('verified');
+      setGeminiData(updatedGeminiData);
+    } catch (error) {
+      console.error("Error updating document:", error);
+      setVerificationStatus('error');
+    }
   };
 
   return (
@@ -65,7 +73,7 @@ export const P14b: React.FC<P14bProps> = ({ fileName, isImported }) => {
         <TbDatabaseImport className={`h-6 w-6 ${getStatusColor()}`} />
         <TbJson className={`h-6 w-6 ${getStatusColor()}`} />
         <Button variant="link" className={`p-0 ${getStatusColor()}`} onClick={() => setIsDialogOpen(true)}>
-          {verificationStatus === 'error' ? 'Részletek' : 'Megtekintés'}
+          {verificationStatus === 'pending' ? 'Ellenőrzés' : verificationStatus === 'error' ? 'Részletek' : 'Megtekintés'}
         </Button>
       </div>
 
