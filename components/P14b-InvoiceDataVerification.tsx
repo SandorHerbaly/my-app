@@ -24,11 +24,13 @@ export const P14b: React.FC<P14bProps> = ({ fileName, isImported }) => {
 
   const fetchData = async () => {
     try {
+      console.log(`Fetching data for file: ${fileName}`);
       const docRef = doc(db, 'AI-Invoices', fileName);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         const data = docSnap.data();
+        console.log('Document data:', data);
         setGeminiData(JSON.stringify(data, null, 2));
         setPdfTextData(data['[f-001] pdf-text'] || 'PDF szöveg nem elérhető');
         setVerificationStatus(data.verificationStatus || 'pending');
@@ -53,12 +55,14 @@ export const P14b: React.FC<P14bProps> = ({ fileName, isImported }) => {
 
   const handleSave = async (updatedGeminiData: string) => {
     try {
+      console.log('Saving updated data...');
       const docRef = doc(db, 'AI-Invoices', fileName);
       const updatedData = JSON.parse(updatedGeminiData);
       await updateDoc(docRef, {
         ...updatedData,
         verificationStatus: 'verified'
       });
+      console.log('Document successfully updated.');
       setVerificationStatus('verified');
       setGeminiData(updatedGeminiData);
     } catch (error) {

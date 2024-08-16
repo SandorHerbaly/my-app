@@ -3,14 +3,16 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, ShoppingCart, Package, Users2, LineChart, Settings, Plus } from 'lucide-react';
+import { LuArrowRightLeft } from "react-icons/lu";
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { TbFileInvoice } from "react-icons/tb"; // Updated import for Invoices icon
+import { LuGanttChartSquare } from "react-icons/lu";
 import { LuTable2 } from "react-icons/lu";
 
 export function Sidebar() {
   const pathname = usePathname();
 
-  const isActive = (path: string) => pathname === path;
+  // Egyedi isActive ellenőrzés minden menüponthoz
+  const isActive = (key: string) => pathname === key;
 
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-14 flex-col border-r bg-background sm:flex">
@@ -26,15 +28,16 @@ export function Sidebar() {
           <TooltipContent side="right">Create New</TooltipContent>
         </Tooltip>
         {[
-          { href: '/dashboard', icon: Home, label: 'Dashboard' },
-          { href: '/dashboard/orders', icon: ShoppingCart, label: 'Orders' },
-          { href: '/dashboard/invoices', icon: TbFileInvoice, label: 'Invoices' }, // Updated Invoices icon here
-          { href: '/dashboard/products', icon: Package, label: 'Products' },
-          { href: '/dashboard/customers', icon: Users2, label: 'Customers' },
-          { href: '/dashboard/analytics', icon: LineChart, label: 'Analytics' },
-          { href: '/dashboard/tables', icon: LuTable2, label: 'Tables' } // Added Tables icon
-        ].map(({ href, icon: Icon, label }) => (
-          <Tooltip key={href}>
+          { key: 'dashboard', href: '/dashboard', icon: Home, label: 'Kezdőlap' },
+          { key: 'orders', href: '/dashboard/orders', icon: ShoppingCart, label: 'Rendelések' },
+          { key: 'invoices', href: '/dashboard/invoices', icon: LuGanttChartSquare, label: 'Számlák' },
+          { key: 'transfers', href: '/dashboard/transfers', icon: LuArrowRightLeft, label: 'Átutalások' },
+          { key: 'products', href: '/dashboard/products', icon: Package, label: 'Termékek' },
+          { key: 'users', href: '/dashboard/users', icon: Users2, label: 'Felhasználók' },
+          { key: 'analytics', href: '/dashboard/analytics', icon: LineChart, label: 'Statisztikák' },
+          { key: 'tables', href: '/dashboard/tables', icon: LuTable2, label: 'Táblázatok' }
+        ].map(({ key, href, icon: Icon, label, iconSize = 'h-5 w-5' }) => (
+          <Tooltip key={key}>
             <TooltipTrigger asChild>
               <Link href={href}>
                 <div className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
@@ -42,7 +45,7 @@ export function Sidebar() {
                     ? 'bg-blue-100 text-blue-600 border border-blue-200' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}>
-                  <Icon className="h-5 w-5" />
+                  <Icon className={`${iconSize}`} /> {/* Itt történik a méret definiálása */}
                   <span className="sr-only">{label}</span>
                 </div>
               </Link>
