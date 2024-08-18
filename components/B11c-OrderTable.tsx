@@ -30,7 +30,7 @@ const orders = [
 export function B11cOrderTable() {
   return (
     <Card>
-      <CardHeader className="px-7">
+      <CardHeader>
         <CardTitle>Orders</CardTitle>
         <CardDescription>Recent orders from your store.</CardDescription>
       </CardHeader>
@@ -47,7 +47,7 @@ export function B11cOrderTable() {
           </TableHeader>
           <TableBody>
             {orders.map((order, index) => (
-              <TableRow key={index} className={index === 0 ? "bg-accent" : ""}>
+              <TableRow key={index} className={index === 0 ? "bg-muted" : ""}>
                 <TableCell>
                   <div className="font-medium">{order.customer}</div>
                   <div className="hidden text-sm text-muted-foreground md:inline">

@@ -1,9 +1,10 @@
-// app/layout.tsx
 import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { TooltipProvider } from "@/components/ui/tooltip"; // importáljuk a TooltipProvider komponenst
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import { ViewportProvider } from "./contexts/ViewportContext";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -29,9 +30,12 @@ export default function RootLayout({
           fontSans.variable
         )}
       >
-        <TooltipProvider>{children}</TooltipProvider> {/* TooltipProvider köré helyezzük a children elemeket */}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <TooltipProvider>
+            <ViewportProvider>{children}</ViewportProvider>
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-

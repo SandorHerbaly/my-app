@@ -52,6 +52,25 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+  .viewport-mobile {
+    max-width: 375px;
+    margin: 0 auto;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+  }
+  
+  .viewport-tablet {
+    max-width: 768px;
+    margin: 0 auto;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+  }
+  
+  .viewport-desktop {
+    max-width: none;
+    margin: 0;
+    border: none;
+  }
 }
 
 @layer base {

@@ -4,26 +4,48 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Truck, Copy, CreditCard } from "lucide-react";
+import { Truck, Copy, CreditCard, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function B11dOrderDetails() {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+    <Card className="overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 bg-muted/50 pb-2">
         <div>
-          <CardTitle className="text-sm font-medium">Order Oe31b70H</CardTitle>
+          <CardTitle className="text-sm font-medium">
+            Order Oe31b70H
+            <Button
+              size="icon"
+              variant="ghost"
+              className="ml-2 h-6 w-6"
+            >
+              <Copy className="h-3 w-3" />
+              <span className="sr-only">Copy Order ID</span>
+            </Button>
+          </CardTitle>
           <CardDescription>Date: November 23, 2023</CardDescription>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" className="h-8 w-8">
             <Truck className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon">
-            <Copy className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+                <span className="sr-only">More</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Edit</DropdownMenuItem>
+              <DropdownMenuItem>Export</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Delete</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <div className="space-y-4">
           <div>
             <h3 className="font-semibold mb-2">Order Details</h3>
@@ -88,11 +110,15 @@ export function B11dOrderDetails() {
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-between bg-muted/50 px-6 py-3">
         <CardDescription>Updated November 23, 2023</CardDescription>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm">Previous</Button>
-          <Button variant="outline" size="sm">Next</Button>
+          <Button variant="outline" size="icon" className="h-8 w-8">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" className="h-8 w-8">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </CardFooter>
     </Card>
