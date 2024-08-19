@@ -1,5 +1,3 @@
-"use client"
-
 import React from 'react';
 import { B11aCardOrder } from "@/components/B11a-CardOrder";
 import { B11bCardStats } from "@/components/B11b-CardStats";
@@ -10,18 +8,14 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ListFilter, File } from "lucide-react";
 
-type ViewportSize = 'mobile' | 'tablet' | 'desktop';
-
-interface OrdersPageProps {
-  viewportSize: ViewportSize;
-}
-
-export default function OrdersPage({ viewportSize }: OrdersPageProps) {
+export default function OrdersPage() {
   return (
-    <div className={`grid gap-4 ${viewportSize === 'desktop' ? 'lg:grid-cols-3 xl:grid-cols-3' : 'grid-cols-1'}`}>
-      <div className={`grid auto-rows-max items-start gap-4 ${viewportSize === 'desktop' ? 'lg:col-span-2' : ''}`}>
-        <div className={`grid gap-4 ${viewportSize === 'mobile' ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
-          <div className={viewportSize === 'mobile' ? '' : 'sm:col-span-2'}>
+    <div className="grid gap-4 lg:grid-cols-3 grid-cols-1">
+      {/* Main content area */}
+      <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
+        {/* B11a and B11b components */}
+        <div className="grid gap-4 sm:grid-cols-2 grid-cols-1">
+          <div className="sm:col-span-2">
             <B11aCardOrder />
           </div>
           <B11bCardStats
@@ -37,6 +31,8 @@ export default function OrdersPage({ viewportSize }: OrdersPageProps) {
             value={10}
           />
         </div>
+        
+        {/* Tabs and B11c component */}
         <Tabs defaultValue="week">
           <div className="flex items-center">
             <TabsList>
@@ -85,7 +81,9 @@ export default function OrdersPage({ viewportSize }: OrdersPageProps) {
           </TabsContent>
         </Tabs>
       </div>
-      <div className={viewportSize === 'desktop' ? 'col-span-1' : 'mt-4'}>
+
+      {/* B11d component */}
+      <div className="lg:col-start-3 lg:row-start-1 mt-4 lg:mt-0">
         <B11dOrderDetails />
       </div>
     </div>
