@@ -15,7 +15,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 w-14 flex flex-col border-r bg-background sm:flex">
+    <aside className="fixed inset-y-0 left-0 z-50 w-14 flex flex-col border-r bg-background sm:flex hidden md:flex"> {/* A "hidden" osztály hozzáadása elrejti a sidebart mobilnézetben */}
       <nav className="flex flex-col items-center gap-3 px-2 pt-2 sm:py-2">
         {/* Dashboard Icon */}
         <Tooltip>

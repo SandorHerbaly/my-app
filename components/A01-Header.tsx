@@ -1,6 +1,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LuUser2, LuChevronDown, LuLayoutGrid, LuArrowRightLeft } from "react-icons/lu";
 import {
   ShoppingCart,
   Package,
@@ -9,6 +10,8 @@ import {
   Settings,
   Search,
   PanelLeft,
+  FileText,
+  Table,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,9 +28,19 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { LuUser2, LuChevronDown } from "react-icons/lu";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+const menuItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LuLayoutGrid },
+  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/dashboard/products", label: "Products", icon: Package },
+  { href: "/dashboard/customers", label: "Customers", icon: Users2 },
+  { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
+  { href: "/dashboard/tables", label: "Tables", icon: Table },
+  { href: "/dashboard/transfers", label: "Transfers", icon: LuArrowRightLeft },
+  { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+];
 
 const breadcrumbOptions = {
   "/dashboard/orders": {
@@ -118,63 +132,24 @@ export function Header() {
     pathname !== "/dashboard" ? breadcrumbOptions[pathname] || { title: "Dashboard", submenu: [] } : { title: "Dashboard", submenu: [] };
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 bg-[#F9FBFD] px-4 sm:px-6 justify-between">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 bg-white border-b border-gray-300 px-4 sm:px-6 justify-between md:bg-[#F9FBFD] md:border-none">
       <div className="flex items-center gap-4 lg:gap-6">
         {/* Sheet gomb csak mobilnézetben */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button
-              size="icon"
-              variant="outline"
-              className="md:hidden flex items-center justify-center"
-            >
+            <Button size="icon" variant="outline" className="md:hidden flex items-center justify-center"> {/* Ikon középre igazítása */}
               <PanelLeft className="h-5 w-5" />
               <span className="sr-only">Toggle Menu</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[300px] sm:w-[400px]">
             <nav className="flex flex-col gap-4">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 px-2 py-1 hover:bg-accent"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/dashboard/orders"
-                className="flex items-center gap-2 px-2 py-1 hover:bg-accent"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                Orders
-              </Link>
-              <Link
-                href="/dashboard/products"
-                className="flex items-center gap-2 px-2 py-1 hover:bg-accent"
-              >
-                <Package className="h-5 w-5" />
-                Products
-              </Link>
-              <Link
-                href="/dashboard/customers"
-                className="flex items-center gap-2 px-2 py-1 hover:bg-accent"
-              >
-                <Users2 className="h-5 w-5" />
-                Customers
-              </Link>
-              <Link
-                href="/dashboard/analytics"
-                className="flex items-center gap-2 px-2 py-1 hover:bg-accent"
-              >
-                <LineChart className="h-5 w-5" />
-                Analytics
-              </Link>
-              <Link
-                href="/dashboard/settings"
-                className="flex items-center gap-2 px-2 py-1 hover:bg-accent"
-              >
-                <Settings className="h-5 w-5" />
-                Settings
-              </Link>
+              {menuItems.map((item, index) => (
+                <Link key={index} href={item.href} className="flex items-center gap-2 px-2 py-1 hover:bg-accent">
+                  <item.icon className="h-5 w-5" />
+                  {item.label}
+                </Link>
+              ))}
             </nav>
           </SheetContent>
         </Sheet>
@@ -189,21 +164,11 @@ export function Header() {
                   <LuChevronDown className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/orders">Orders</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/products">Products</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/customers">Customers</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/analytics">Analytics</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/settings">Settings</Link>
-                  </DropdownMenuItem>
+                  {menuItems.map((item, index) => (
+                    <DropdownMenuItem asChild key={index}>
+                      <Link href={item.href}>{item.label}</Link>
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </BreadcrumbItem>
@@ -245,11 +210,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-full bg-background"
-        >
+        <Button variant="outline" size="icon" className="rounded-full bg-background">
           <LuUser2 className="h-5 w-5" />
         </Button>
       </div>
