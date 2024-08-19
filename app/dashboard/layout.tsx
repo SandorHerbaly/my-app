@@ -47,8 +47,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main content */}
       <div className="pt-14"> {/* Add padding top to push content down */}
         <div className={`flex ${viewportSize !== 'desktop' ? 'flex-col' : ''}`}>
-          <Sidebar />
-          <div className={`flex flex-1 flex-col ${viewportSize === 'desktop' ? 'pl-14' : 'pl-14 sm:pl-14'}`}>
+          {viewportSize !== 'mobile' && <Sidebar />}
+          <div className={`flex flex-1 flex-col ${viewportSize === 'mobile' ? 'pl-0' : viewportSize === 'desktop' ? 'pl-14' : 'sm:pl-14'}`}>
             <Header />
             <main className="flex-1 space-y-4 p-4 md:p-8" style={{ paddingTop: '5px' }}> {/* Set padding top to 5px */}
               {React.Children.map(children, child =>

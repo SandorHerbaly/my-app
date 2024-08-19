@@ -18,21 +18,23 @@ interface OrdersPageProps {
 
 export default function OrdersPage({ viewportSize }: OrdersPageProps) {
   return (
-    <div className={`grid gap-4 ${viewportSize !== 'mobile' ? 'lg:grid-cols-3 xl:grid-cols-3' : 'grid-cols-1'}`}>
-      <div className={`grid auto-rows-max items-start gap-4 ${viewportSize !== 'mobile' ? 'lg:col-span-2' : ''}`}>
-        <div className={`grid gap-4 ${viewportSize === 'mobile' ? 'grid-cols-1' : 'grid-cols-2'}`}>
-          <B11aCardOrder />
-          <B11bCardStats 
-            title="This Week" 
-            amount="$1,329" 
-            description="+25% from last week" 
-            value={25} 
+    <div className={`grid gap-4 ${viewportSize === 'desktop' ? 'lg:grid-cols-3 xl:grid-cols-3' : 'grid-cols-1'}`}>
+      <div className={`grid auto-rows-max items-start gap-4 ${viewportSize === 'desktop' ? 'lg:col-span-2' : ''}`}>
+        <div className={`grid gap-4 ${viewportSize === 'mobile' ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
+          <div className={viewportSize === 'mobile' ? '' : 'sm:col-span-2'}>
+            <B11aCardOrder />
+          </div>
+          <B11bCardStats
+            title="This Week"
+            amount="$1,329"
+            description="+25% from last week"
+            value={25}
           />
-          <B11bCardStats 
-            title="This Month" 
-            amount="$5,329" 
-            description="+10% from last month" 
-            value={10} 
+          <B11bCardStats
+            title="This Month"
+            amount="$5,329"
+            description="+10% from last month"
+            value={10}
           />
         </div>
         <Tabs defaultValue="week">
@@ -82,17 +84,10 @@ export default function OrdersPage({ viewportSize }: OrdersPageProps) {
             <B11cOrderTable />
           </TabsContent>
         </Tabs>
-        {viewportSize === 'mobile' && (
-          <div className="mt-4">
-            <B11dOrderDetails />
-          </div>
-        )}
       </div>
-      {viewportSize !== 'mobile' && (
-        <div className="col-span-1">
-          <B11dOrderDetails />
-        </div>
-      )}
+      <div className={viewportSize === 'desktop' ? 'col-span-1' : 'mt-4'}>
+        <B11dOrderDetails />
+      </div>
     </div>
   );
 }
