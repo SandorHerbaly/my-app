@@ -1,7 +1,7 @@
 import * as React from "react";
 import Link from "next/link";
-import { Home, ShoppingCart, Package, Users2, LineChart, FileText, Settings, Table } from "lucide-react"; // Ikonok importálása
-import { LuLayoutGrid, LuArrowRightLeft } from "react-icons/lu"; // Az új ikon importálása
+import { Home, ShoppingCart, Package, Users2, LineChart, FileText, Settings, Table } from "lucide-react";
+import { LuLayoutGrid, LuArrowRightLeft } from "react-icons/lu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePathname } from 'next/navigation';
 
@@ -11,12 +11,12 @@ export function Sidebar() {
   const getIconClasses = (path: string) => {
     return `flex h-9 w-9 items-center justify-center rounded-lg ${
       pathname === path ? "bg-[#E7ECF1] text-accent-foreground" : "text-muted-foreground"
-    } transition-colors md:h-8 md:w-8 mt-3`; // Minden ikonhoz 20px (5x4px) extra margó hozzáadása
+    } transition-colors md:h-8 md:w-8 mt-3`;
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 w-14 flex flex-col border-r bg-background sm:flex hidden md:flex"> {/* A "hidden" osztály hozzáadása elrejti a sidebart mobilnézetben */}
-      <nav className="flex flex-col items-center gap-3 px-2 pt-2 sm:py-2">
+    <aside className="fixed inset-y-0 left-0 z-50 w-14 flex flex-col border-r bg-background sm:flex hidden md:flex">
+      <nav className="flex flex-col items-center gap-3 px-2 pt-2 sm:py-2 h-full overflow-y-auto scrollbar-hide">
         {/* Dashboard Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -104,9 +104,8 @@ export function Sidebar() {
           </TooltipTrigger>
           <TooltipContent side="right">Tables</TooltipContent>
         </Tooltip>
-      </nav>
 
-      <nav className="mt-auto flex flex-col items-center gap-3 px-2 pb-4">
+        {/* Settings Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/dashboard/settings" className={getIconClasses("/dashboard/settings")}>
@@ -117,6 +116,19 @@ export function Sidebar() {
           <TooltipContent side="right">Settings</TooltipContent>
         </Tooltip>
       </nav>
+      <style jsx>{`
+        @media (min-width: 640px) and (max-width: 1023px) {
+          nav {
+            height: 100%;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          nav::-webkit-scrollbar {
+            display: none;
+          }
+        }
+      `}</style>
     </aside>
   );
 }
