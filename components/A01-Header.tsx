@@ -14,12 +14,6 @@ import {
   Table,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Breadcrumb,
@@ -28,7 +22,13 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LuLayoutGrid },
@@ -45,84 +45,75 @@ const menuItems = [
 const breadcrumbOptions = {
   "/dashboard/orders": {
     title: "Orders",
-    submenu: [
-      "Order History",
-      "Pending Orders",
-      "Shipped Orders",
-      "Cancelled Orders",
-      "Return Requests",
-    ],
+    submenu: ["Order History", "Pending Orders", "Shipped Orders", "Cancelled Orders", "Return Requests"],
   },
   "/dashboard/products": {
     title: "Products",
-    submenu: [
-      "Product List",
-      "Add New Product",
-      "Categories",
-      "Inventory",
-      "Product Reviews",
-    ],
+    submenu: ["Product List", "Add New Product", "Categories", "Inventory", "Product Reviews"],
   },
   "/dashboard/customers": {
     title: "Customers",
-    submenu: [
-      "Customer List",
-      "Add New Customer",
-      "Customer Segments",
-      "Customer Feedback",
-      "VIP Customers",
-    ],
+    submenu: ["Customer List", "Add New Customer", "Customer Segments", "Customer Feedback", "VIP Customers"],
   },
   "/dashboard/analytics": {
     title: "Analytics",
-    submenu: [
-      "Overview",
-      "Sales Reports",
-      "Customer Insights",
-      "Product Performance",
-      "Custom Reports",
-    ],
-  },
-  "/dashboard/settings": {
-    title: "Settings",
-    submenu: [
-      "General Settings",
-      "User Management",
-      "Payment Settings",
-      "Notification Settings",
-      "Integrations",
-    ],
-  },
-  "/dashboard/transfers": {
-    title: "Transfers",
-    submenu: [
-      "Internal Transfers",
-      "External Transfers",
-      "Transfer History",
-      "Scheduled Transfers",
-      "Transfer Reports",
-    ],
-  },
-  "/dashboard/invoices": {
-    title: "Invoices",
-    submenu: [
-      "Invoice List",
-      "Create Invoice",
-      "Pending Invoices",
-      "Paid Invoices",
-      "Invoice Reports",
-    ],
+    submenu: ["Overview", "Sales Reports", "Customer Insights", "Product Performance", "Custom Reports"],
   },
   "/dashboard/tables": {
     title: "Tables",
-    submenu: [
-      "Table List",
-      "Create Table",
-      "Table Settings",
-      "Table Reports",
-      "Custom Tables",
-    ],
+    submenu: ["Table List", "Create Table", "Table Settings", "Table Reports", "Custom Tables"],
   },
+  "/dashboard/transfers": {
+    title: "Transfers",
+    submenu: ["Internal Transfers", "External Transfers", "Transfer History", "Scheduled Transfers", "Transfer Reports"],
+  },
+  "/dashboard/invoices": {
+    title: "Invoices",
+    submenu: ["Invoice List", "Create Invoice", "Pending Invoices", "Paid Invoices", "Invoice Reports"],
+  },
+  "/dashboard/settings": {
+    title: "Settings",
+    submenu: ["General Settings", "User Management", "Payment Settings", "Notification Settings", "Integrations"],
+  },
+};
+
+const MobileHeaderContent = ({ currentBreadcrumb }) => {
+  return (
+    <div className="w-full max-w-sm mx-auto">
+      <Select>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={currentBreadcrumb.title} />
+        </SelectTrigger>
+        <SelectContent>
+          {currentBreadcrumb.submenu.map((item, index) => (
+            <SelectItem key={index} value={item.toLowerCase().replace(/\s+/g, '-')}>
+              {item}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+};
+
+const DesktopHeaderContent = ({ currentBreadcrumb }) => {
+  return (
+    <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xs lg:max-w-xs">
+      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Select>
+        <SelectTrigger className="w-full pl-8 pr-10 bg-white">
+          <SelectValue placeholder={currentBreadcrumb.title} />
+        </SelectTrigger>
+        <SelectContent>
+          {currentBreadcrumb.submenu.map((item, index) => (
+            <SelectItem key={index} value={item.toLowerCase().replace(/\s+/g, '-')}>
+              {item}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 };
 
 export function Header() {
@@ -169,43 +160,17 @@ export function Header() {
           </SheetContent>
         </Sheet>
 
-        {/* Breadcrumb - Dashboard lenyíló menüvel */}
+        {/* Breadcrumb - Desktop és tablet nézetben */}
         <Breadcrumb className="hidden md:flex">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-1">
-                  Dashboard
-                  <LuChevronDown className="h-4 w-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {menuItems.map((item, index) => (
-                    <DropdownMenuItem asChild key={index}>
-                      <Link href={item.href}>{item.label}</Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
             </BreadcrumbItem>
             {pathname !== "/dashboard" && (
               <>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-1">
-                      {currentBreadcrumb.title}
-                      {currentBreadcrumb.submenu.length > 0 && (
-                        <LuChevronDown className="h-4 w-4" />
-                      )}
-                    </DropdownMenuTrigger>
-                    {currentBreadcrumb.submenu.length > 0 && (
-                      <DropdownMenuContent align="start">
-                        {currentBreadcrumb.submenu.map((item, index) => (
-                          <DropdownMenuItem key={index}>{item}</DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    )}
-                  </DropdownMenu>
+                  <BreadcrumbLink href={pathname}>{currentBreadcrumb.title}</BreadcrumbLink>
                 </BreadcrumbItem>
               </>
             )}
@@ -213,15 +178,14 @@ export function Header() {
         </Breadcrumb>
       </div>
 
-      <div className="flex flex-1 justify-center items-center md:justify-end">
-        <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xs lg:max-w-xs">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search..."
-            className="w-full pl-8 pr-10 bg-white"
-          />
-        </div>
+      {/* Mobilnézet: Select komponens */}
+      <div className="md:hidden flex-1">
+        <MobileHeaderContent currentBreadcrumb={currentBreadcrumb} />
+      </div>
+
+      {/* Desktop és tablet nézet: Stílusozott Select komponens */}
+      <div className="hidden md:flex flex-1 justify-center items-center md:justify-end">
+        <DesktopHeaderContent currentBreadcrumb={currentBreadcrumb} />
       </div>
 
       <div className="flex items-center gap-4">
