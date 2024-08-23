@@ -21,7 +21,7 @@ export default function P4cEditProduct() {
             <h1 className="text-2xl font-semibold">Pro Controller</h1>
             <Badge variant="outline">In stock</Badge>
           </div>
-          <div className="space-x-2">
+          <div className="space-x-2 hidden md:block">
             <Button variant="outline">Discard</Button>
             <Button>Save Product</Button>
           </div>
@@ -181,6 +181,14 @@ export default function P4cEditProduct() {
             <Button variant="outline" className="w-full">Archive Product</Button>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Mobile-only footer buttons */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t md:hidden">
+        <div className="flex justify-center space-x-2">
+          <Button variant="outline" className="flex-1">Discard</Button>
+          <Button className="flex-1">Save Product</Button>
+        </div>
       </div>
     </div>
   );
