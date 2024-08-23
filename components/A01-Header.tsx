@@ -82,7 +82,7 @@ const breadcrumbOptions = {
     submenu: [
       { label: "Product List", path: "/dashboard/p4_products/p4a_product_list" },
       { label: "Add New Product", path: "/dashboard/p4_products/p4b_add_new_product" },
-      { label: "Categories", path: "/dashboard/p4_products/p4c_categories" },
+      { label: "Edit Product", path: "/dashboard/p4_products/p4c_edit_product" },
       { label: "Inventory", path: "/dashboard/p4_products/p4d_inventory" },
       { label: "Product Reviews", path: "/dashboard/p4_products/p4e_product_reviews" },
     ],
