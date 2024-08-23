@@ -43,35 +43,35 @@ const menuItems = [
 ];
 
 const breadcrumbOptions = {
-  "/dashboard/orders": {
+  "/dashboard/p1_orders": {
     title: "Orders",
     submenu: ["Order History", "Pending Orders", "Shipped Orders", "Cancelled Orders", "Return Requests"],
   },
-  "/dashboard/products": {
-    title: "Products",
-    submenu: ["Product List", "Add New Product", "Categories", "Inventory", "Product Reviews"],
+  "/dashboard/p2_invoices": {
+    title: "Invoices",
+    submenu: ["Upload pdf invoices", "Create Invoice", "Pending Invoices", "Paid Invoices", "Invoice Reports"],
   },
-  "/dashboard/customers": {
-    title: "Customers",
-    submenu: ["Customer List", "Add New Customer", "Customer Segments", "Customer Feedback", "VIP Customers"],
-  },
-  "/dashboard/analytics": {
-    title: "Analytics",
-    submenu: ["Overview", "Sales Reports", "Customer Insights", "Product Performance", "Custom Reports"],
-  },
-  "/dashboard/tables": {
-    title: "Tables",
-    submenu: ["Table List", "Create Table", "Table Settings", "Table Reports", "Custom Tables"],
-  },
-  "/dashboard/transfers": {
+  "/dashboard/p3_transfers": {
     title: "Transfers",
     submenu: ["Internal Transfers", "External Transfers", "Transfer History", "Scheduled Transfers", "Transfer Reports"],
   },
-  "/dashboard/invoices": {
-    title: "Invoices",
-    submenu: ["Invoice List", "Create Invoice", "Pending Invoices", "Paid Invoices", "Invoice Reports"],
+  "/dashboard/p4_products": {
+    title: "Products",
+    submenu: ["Product List", "Add New Product", "Categories", "Inventory", "Product Reviews"],
   },
-  "/dashboard/settings": {
+  "/dashboard/p5_customers": {
+    title: "Customers",
+    submenu: ["Customer List", "Add New Customer", "Customer Segments", "Customer Feedback", "VIP Customers"],
+  },
+  "/dashboard/p6_analytics": {
+    title: "Analytics",
+    submenu: ["Overview", "Sales Reports", "Customer Insights", "Product Performance", "Custom Reports"],
+  },
+  "/dashboard/p7_tables": {
+    title: "Tables",
+    submenu: ["Table List", "Create Table", "Table Settings", "Table Reports", "Custom Tables"],
+  },
+  "/dashboard/p8_settings": {
     title: "Settings",
     submenu: ["General Settings", "User Management", "Payment Settings", "Notification Settings", "Integrations"],
   },
