@@ -17,7 +17,7 @@ interface CardStatsProps {
   value: number;
 }
 
-export function P1COMP2CardStats({ title, amount, description, value }: CardStatsProps) {
+export function P1S2CardStats({ title, amount, description, value }: CardStatsProps) {
   return (
     <Card>
       <CardHeader className="pb-2">

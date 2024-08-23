@@ -1,8 +1,8 @@
 import React from 'react';
-import { P1COMP1CardOrder } from "@/components/P1COMP1CardOrder";
-import { P1COMP2CardStats } from "@/components/P1COMP2CardStats";
-import { P1COMP3OrderTable } from "@/components/P1COMP3OrderTable";
-import { P1COMP4OrderDetails } from "@/components/P1COMP4OrderDetails";
+import { P1S1CardOrder } from "@/components/p1s_orders/P1S1CardOrder";
+import { P1S2CardStats } from "@/components/p1s_orders/P1S2CardStats";
+import { P1S3OrderTable } from "@/components/p1s_orders/P1S3OrderTable";
+import { P1S4OrderDetails } from "@/components/p1s_orders/P1S4OrderDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -16,15 +16,15 @@ export default function P1Orders() {
         {/* B11a and B11b components */}
         <div className="grid gap-4 sm:grid-cols-2 grid-cols-1">
           <div className="sm:col-span-2">
-            <P1COMP1CardOrder />
+            <P1S1CardOrder />
           </div>
-          <P1COMP2CardStats
+          <P1S2CardStats
             title="This Week"
             amount="$1,329"
             description="+25% from last week"
             value={25}
           />
-          <P1COMP2CardStats
+          <P1S2CardStats
             title="This Month"
             amount="$5,329"
             description="+10% from last month"
@@ -77,14 +77,14 @@ export default function P1Orders() {
             </div>
           </div>
           <TabsContent value="week">
-            <P1COMP3OrderTable />
+            <P1S3OrderTable />
           </TabsContent>
         </Tabs>
       </div>
 
       {/* B11d component */}
       <div className="lg:col-start-3 lg:row-start-1 mt-4 lg:mt-0">
-        <P1COMP4OrderDetails />
+        <P1S4OrderDetails />
       </div>
     </div>
   );

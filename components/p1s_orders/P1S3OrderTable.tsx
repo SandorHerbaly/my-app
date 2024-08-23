@@ -27,7 +27,7 @@ const orders = [
   { customer: "Emma Brown", email: "emma@example.com", type: "Sale", status: "Fulfilled", date: "2023-06-26", amount: "$450.00" },
 ];
 
-export function B11cOrderTable() {
+export function P1S3OrderTable() {
   return (
     <Card>
       <CardHeader>

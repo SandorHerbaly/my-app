@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Truck, Copy, CreditCard, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-export function B11dOrderDetails() {
+export function P1S4OrderDetails() {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 bg-muted/50 pb-2">
