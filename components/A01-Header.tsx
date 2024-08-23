@@ -32,62 +32,123 @@ import {
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LuLayoutGrid },
-  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/dashboard/products", label: "Products", icon: Package },
-  { href: "/dashboard/customers", label: "Customers", icon: Users2 },
-  { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
-  { href: "/dashboard/tables", label: "Tables", icon: Table },
-  { href: "/dashboard/transfers", label: "Transfers", icon: LuArrowRightLeft },
-  { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/p1_orders", label: "Orders", icon: ShoppingCart },
+  { href: "/dashboard/p2_invoices", label: "Invoices", icon: FileText },
+  { href: "/dashboard/p3_transfers", label: "Transfers", icon: LuArrowRightLeft },
+  { href: "/dashboard/p4_products", label: "Products", icon: Package },
+  { href: "/dashboard/p5_customers", label: "Customers", icon: Users2 },
+  { href: "/dashboard/p6_analytics", label: "Analytics", icon: LineChart },
+  { href: "/dashboard/p7_tables", label: "Tables", icon: Table },
+  { href: "/dashboard/p8_settings", label: "Settings", icon: Settings },
 ];
 
 const breadcrumbOptions = {
   "/dashboard/p1_orders": {
     title: "Orders",
-    submenu: ["Order History", "Pending Orders", "Shipped Orders", "Cancelled Orders", "Return Requests"],
+    path: "/dashboard/p1_orders",
+    submenu: [
+      { label: "Order History", path: "/dashboard/p1_orders/p1a_order_history" },
+      { label: "Pending Orders", path: "/dashboard/p1_orders/p1b_pending_orders" },
+      { label: "Shipped Orders", path: "/dashboard/p1_orders/p1c_shipped_orders" },
+      { label: "Cancelled Orders", path: "/dashboard/p1_orders/p1d_cancelled_orders" },
+      { label: "Return Requests", path: "/dashboard/p1_orders/p1e_return_requests" },
+    ],
   },
   "/dashboard/p2_invoices": {
     title: "Invoices",
-    submenu: ["Upload pdf invoices", "Create Invoice", "Pending Invoices", "Paid Invoices", "Invoice Reports"],
+    path: "/dashboard/p2_invoices",
+    submenu: [
+      { label: "Upload pdf invoices", path: "/dashboard/p2_invoices/p2a_upload_pdf_invoices" },
+      { label: "Create Invoice", path: "/dashboard/p2_invoices/p2b_create_invoice" },
+      { label: "Pending Invoices", path: "/dashboard/p2_invoices/p2c_pending_invoices" },
+      { label: "Paid Invoices", path: "/dashboard/p2_invoices/p2d_paid_invoices" },
+      { label: "Invoice Reports", path: "/dashboard/p2_invoices/p2e_invoice_reports" },
+    ],
   },
   "/dashboard/p3_transfers": {
     title: "Transfers",
-    submenu: ["Internal Transfers", "External Transfers", "Transfer History", "Scheduled Transfers", "Transfer Reports"],
+    path: "/dashboard/p3_transfers",
+    submenu: [
+      { label: "Internal Transfers", path: "/dashboard/p3_transfers/p3a_internal_transfers" },
+      { label: "External Transfers", path: "/dashboard/p3_transfers/p3b_external_transfers" },
+      { label: "Transfer History", path: "/dashboard/p3_transfers/p3c_transfer_history" },
+      { label: "Scheduled Transfers", path: "/dashboard/p3_transfers/p3d_scheduled_transfers" },
+      { label: "Transfer Reports", path: "/dashboard/p3_transfers/p3e_transfer_reports" },
+    ],
   },
   "/dashboard/p4_products": {
     title: "Products",
-    submenu: ["Product List", "Add New Product", "Categories", "Inventory", "Product Reviews"],
+    path: "/dashboard/p4_products",
+    submenu: [
+      { label: "Product List", path: "/dashboard/p4_products/p4a_product_list" },
+      { label: "Add New Product", path: "/dashboard/p4_products/p4b_add_new_product" },
+      { label: "Categories", path: "/dashboard/p4_products/p4c_categories" },
+      { label: "Inventory", path: "/dashboard/p4_products/p4d_inventory" },
+      { label: "Product Reviews", path: "/dashboard/p4_products/p4e_product_reviews" },
+    ],
   },
   "/dashboard/p5_customers": {
     title: "Customers",
-    submenu: ["Customer List", "Add New Customer", "Customer Segments", "Customer Feedback", "VIP Customers"],
+    path: "/dashboard/p5_customers",
+    submenu: [
+      { label: "Customer List", path: "/dashboard/p5_customers/p5a_customer_list" },
+      { label: "Add New Customer", path: "/dashboard/p5_customers/p5b_add_new_customer" },
+      { label: "Customer Segments", path: "/dashboard/p5_customers/p5c_customer_segments" },
+      { label: "Customer Feedback", path: "/dashboard/p5_customers/p5d_customer_feedback" },
+      { label: "VIP Customers", path: "/dashboard/p5_customers/p5e_VIP_customers" },
+    ],
   },
   "/dashboard/p6_analytics": {
     title: "Analytics",
-    submenu: ["Overview", "Sales Reports", "Customer Insights", "Product Performance", "Custom Reports"],
+    path: "/dashboard/p6_analytics",
+    submenu: [
+      { label: "Overview", path: "/dashboard/p6_analytics/p6a_overview" },
+      { label: "Sales Reports", path: "/dashboard/p6_analytics/p6b_sales_reports" },
+      { label: "Customer Insights", path: "/dashboard/p6_analytics/p6c_customer_insights" },
+      { label: "Product Performance", path: "/dashboard/p6_analytics/p6d_product_performance" },
+      { label: "Custom Reports", path: "/dashboard/p6_analytics/p6e_custom_reports" },
+    ],
   },
   "/dashboard/p7_tables": {
     title: "Tables",
-    submenu: ["Table List", "Create Table", "Table Settings", "Table Reports", "Custom Tables"],
+    path: "/dashboard/p7_tables",
+    submenu: [
+      { label: "Table List", path: "/dashboard/p7_tables/p7a_table_list" },
+      { label: "Create Table", path: "/dashboard/p7_tables/p7b_create_table" },
+      { label: "Table Settings", path: "/dashboard/p7_tables/p7c_table_settings" },
+      { label: "Table Reports", path: "/dashboard/p7_tables/p7d_table_reports" },
+      { label: "Custom Tables", path: "/dashboard/p7_tables/p7e_custom_tables" },
+    ],
   },
   "/dashboard/p8_settings": {
     title: "Settings",
-    submenu: ["General Settings", "User Management", "Payment Settings", "Notification Settings", "Integrations"],
+    path: "/dashboard/p8_settings",
+    submenu: [
+      { label: "General Settings", path: "/dashboard/p8_settings/p8a_general_settings" },
+      { label: "User Management", path: "/dashboard/p8_settings/p8b_user_management" },
+      { label: "Payment Settings", path: "/dashboard/p8_settings/p8c_payment_settings" },
+      { label: "Notification Settings", path: "/dashboard/p8_settings/p8d_notification_settings" },
+      { label: "Integrations", path: "/dashboard/p8_settings/p8e_integrations" },
+    ],
   },
 };
 
-const MobileHeaderContent = ({ currentBreadcrumb }) => {
+const MobileHeaderContent = ({ currentBreadcrumb, onSelectChange, currentPath }) => {
+  if (!currentBreadcrumb.submenu || currentBreadcrumb.submenu.length === 0) {
+    return null;
+  }
+
   return (
     <div className="w-full max-w-sm mx-auto">
-      <Select>
+      <Select onValueChange={onSelectChange} value={currentPath}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder={currentBreadcrumb.title} />
         </SelectTrigger>
         <SelectContent>
-          {currentBreadcrumb.submenu.map((item, index) => (
-            <SelectItem key={index} value={item.toLowerCase().replace(/\s+/g, '-')}>
-              {item}
+          <SelectItem value={currentBreadcrumb.path}>{currentBreadcrumb.title}</SelectItem>
+          {currentBreadcrumb.submenu.map((item) => (
+            <SelectItem key={item.path} value={item.path}>
+              {item.label}
             </SelectItem>
           ))}
         </SelectContent>
@@ -96,18 +157,23 @@ const MobileHeaderContent = ({ currentBreadcrumb }) => {
   );
 };
 
-const DesktopHeaderContent = ({ currentBreadcrumb }) => {
+const DesktopHeaderContent = ({ currentBreadcrumb, onSelectChange, currentPath }) => {
+  if (!currentBreadcrumb.submenu || currentBreadcrumb.submenu.length === 0) {
+    return null;
+  }
+
   return (
     <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xs lg:max-w-xs">
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-      <Select>
+      <Select onValueChange={onSelectChange} value={currentPath}>
         <SelectTrigger className="w-full pl-8 pr-10 bg-white">
           <SelectValue placeholder={currentBreadcrumb.title} />
         </SelectTrigger>
         <SelectContent>
-          {currentBreadcrumb.submenu.map((item, index) => (
-            <SelectItem key={index} value={item.toLowerCase().replace(/\s+/g, '-')}>
-              {item}
+          <SelectItem value={currentBreadcrumb.path}>{currentBreadcrumb.title}</SelectItem>
+          {currentBreadcrumb.submenu.map((item) => (
+            <SelectItem key={item.path} value={item.path}>
+              {item.label}
             </SelectItem>
           ))}
         </SelectContent>
@@ -121,8 +187,24 @@ export function Header() {
   const router = useRouter();
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const currentBreadcrumb =
-    pathname !== "/dashboard" ? breadcrumbOptions[pathname] || { title: "Dashboard", submenu: [] } : { title: "Dashboard", submenu: [] };
+  const getPageInfo = (path) => {
+    const parts = path.split('/');
+    const mainPath = `/${parts[1]}/${parts[2]}`;
+    const mainBreadcrumb = breadcrumbOptions[mainPath] || { title: "Dashboard", submenu: [], path: "/dashboard" };
+    const subPageInfo = mainBreadcrumb.submenu?.find(item => item.path === path);
+    
+    return {
+      mainBreadcrumb,
+      subPageTitle: subPageInfo ? subPageInfo.label : null,
+      currentPath: subPageInfo ? subPageInfo.path : mainPath
+    };
+  };
+
+  const { mainBreadcrumb, subPageTitle, currentPath } = getPageInfo(pathname);
+
+  const handleSelectChange = (value) => {
+    router.push(value);
+  };
 
   const handleMenuItemClick = (href: string) => {
     setIsOpen(false);
@@ -166,11 +248,21 @@ export function Header() {
             <BreadcrumbItem>
               <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
             </BreadcrumbItem>
-            {pathname !== "/dashboard" && (
+            {mainBreadcrumb.title !== "Dashboard" && (
               <>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href={pathname}>{currentBreadcrumb.title}</BreadcrumbLink>
+                  <BreadcrumbLink href={mainBreadcrumb.path}>
+                    {mainBreadcrumb.title}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              </>
+            )}
+            {subPageTitle && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href={pathname}>{subPageTitle}</BreadcrumbLink>
                 </BreadcrumbItem>
               </>
             )}
@@ -180,12 +272,20 @@ export function Header() {
 
       {/* Mobilnézet: Select komponens */}
       <div className="md:hidden flex-1">
-        <MobileHeaderContent currentBreadcrumb={currentBreadcrumb} />
+        <MobileHeaderContent 
+          currentBreadcrumb={mainBreadcrumb} 
+          onSelectChange={handleSelectChange}
+          currentPath={currentPath}
+        />
       </div>
 
       {/* Desktop és tablet nézet: Stílusozott Select komponens */}
       <div className="hidden md:flex flex-1 justify-center items-center md:justify-end">
-        <DesktopHeaderContent currentBreadcrumb={currentBreadcrumb} />
+        <DesktopHeaderContent 
+          currentBreadcrumb={mainBreadcrumb}
+          onSelectChange={handleSelectChange}
+          currentPath={currentPath}
+        />
       </div>
 
       <div className="flex items-center gap-4">
