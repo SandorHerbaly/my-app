@@ -1,6 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
-import { Home, ShoppingCart, Package, Users2, LineChart, FileText, Settings, Table } from "lucide-react";
+import { ShoppingCart, Package, Users2, LineChart, FileText, Settings, Table } from "lucide-react";
 import { LuLayoutGrid, LuArrowRightLeft } from "react-icons/lu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePathname } from 'next/navigation';
