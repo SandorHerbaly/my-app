@@ -1,11 +1,11 @@
 import React from 'react'
 
-function P2aUploadPdfInvoices() {
+function P2aUploadFinancialReceipts() {
   return (
     <div>
-      P2aUploadPdfInvoices
+      P2aUploadFinancialReceipts
     </div>
   )
 }
 
-export default P2aUploadPdfInvoices
+export default P2aUploadFinancialReceipts

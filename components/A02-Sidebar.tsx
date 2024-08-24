@@ -28,7 +28,7 @@ export function Sidebar() {
           <TooltipContent side="right">Dashboard</TooltipContent>
         </Tooltip>
 
-        {/* Orders Icon */}
+        {/* P1 -  Orders Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/dashboard/p1_orders" className={getIconClasses("/dashboard/p1_orders")}>
@@ -39,18 +39,18 @@ export function Sidebar() {
           <TooltipContent side="right">Orders</TooltipContent>
         </Tooltip>
 
-        {/* Invoices Icon */}
+        {/* P2 - Financial Receipts Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Link href="/dashboard/p2_invoices" className={getIconClasses("/dashboard/p2_invoices")}>
+            <Link href="/dashboard/p2_financial_receipts" className={getIconClasses("/dashboard/p2_financial_receipts")}>
               <FileText className="h-5 w-5 mt-0" />
-              <span className="sr-only">Invoices</span>
+              <span className="sr-only">Financial Receipts</span>
             </Link>
           </TooltipTrigger>
-          <TooltipContent side="right">Invoices</TooltipContent>
+          <TooltipContent side="right">Financial Receipts</TooltipContent>
         </Tooltip>
 
-        {/* Transfers Icon */}
+        {/* P3 -  Transfers Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/dashboard/p3_transfers" className={getIconClasses("/dashboard/p3_transfers")}>
@@ -61,7 +61,7 @@ export function Sidebar() {
           <TooltipContent side="right">Transfers</TooltipContent>
         </Tooltip>
 
-        {/* Products Icon */}
+        {/* P4 -  Products Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/dashboard/p4_products" className={getIconClasses("/dashboard/p4_products")}>
@@ -72,7 +72,7 @@ export function Sidebar() {
           <TooltipContent side="right">Products</TooltipContent>
         </Tooltip>
 
-        {/* Customers Icon */}
+        {/* P5 - Customers Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/dashboard/p5_customers" className={getIconClasses("/dashboard/p5_customers")}>
@@ -83,7 +83,7 @@ export function Sidebar() {
           <TooltipContent side="right">Customers</TooltipContent>
         </Tooltip>
 
-        {/* Analytics Icon */}
+        {/* P6 - Analytics Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/dashboard/p6_analytics" className={getIconClasses("/dashboard/p6_analytics")}>
@@ -94,7 +94,7 @@ export function Sidebar() {
           <TooltipContent side="right">Analytics</TooltipContent>
         </Tooltip>
 
-        {/* Tables Icon */}
+        {/* P7 - Tables Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/dashboard/p7_tables" className={getIconClasses("/dashboard/p7_tables")}>
@@ -105,7 +105,7 @@ export function Sidebar() {
           <TooltipContent side="right">Tables</TooltipContent>
         </Tooltip>
 
-        {/* Settings Icon */}
+        {/* P8 - Settings Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href="/dashboard/p8_settings" className={getIconClasses("/dashboard/p8_settings")}>

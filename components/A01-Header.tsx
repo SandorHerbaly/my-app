@@ -33,7 +33,7 @@ import {
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LuLayoutGrid },
   { href: "/dashboard/p1_orders", label: "Orders", icon: ShoppingCart },
-  { href: "/dashboard/p2_invoices", label: "Invoices", icon: FileText },
+  { href: "/dashboard/p2_financial_receipts", label: "Financial Receipts", icon: FileText },
   { href: "/dashboard/p3_transfers", label: "Transfers", icon: LuArrowRightLeft },
   { href: "/dashboard/p4_products", label: "Products", icon: Package },
   { href: "/dashboard/p5_customers", label: "Customers", icon: Users2 },
@@ -54,15 +54,15 @@ const breadcrumbOptions = {
       { label: "Return Requests", path: "/dashboard/p1_orders/p1e_return_requests" },
     ],
   },
-  "/dashboard/p2_invoices": {
-    title: "Invoices",
-    path: "/dashboard/p2_invoices",
+  "/dashboard/p2_financial_receipts": {
+    title: "Financial Receipts",
+    path: "/dashboard/p2_financial_receipts",
     submenu: [
-      { label: "Upload pdf invoices", path: "/dashboard/p2_invoices/p2a_upload_pdf_invoices" },
-      { label: "Create Invoice", path: "/dashboard/p2_invoices/p2b_create_invoice" },
-      { label: "Pending Invoices", path: "/dashboard/p2_invoices/p2c_pending_invoices" },
-      { label: "Paid Invoices", path: "/dashboard/p2_invoices/p2d_paid_invoices" },
-      { label: "Invoice Reports", path: "/dashboard/p2_invoices/p2e_invoice_reports" },
+      { label: "Upload Financial Receipts", path: "/dashboard/p2_financial_receipts/p2a_upload_financial_receipts" },
+      { label: "Create Invoice", path: "/dashboard/p2_financial_receipts/p2b_create_invoice" },
+      { label: "Pending Invoices", path: "/dashboard/p2_financial_receipts/p2c_pending_invoices" },
+      { label: "Paid Invoices", path: "/dashboard/p2_financial_receipts/p2d_paid_invoices" },
+      { label: "Invoice Reports", path: "/dashboard/p2_financial_receipts/p2e_invoice_reports" },
     ],
   },
   "/dashboard/p3_transfers": {

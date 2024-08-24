@@ -13,13 +13,9 @@ const B10a3InvoiceImageDisplay: React.FC<B10a3InvoiceImageDisplayProps> = ({ sel
     if (selectedFile) {
       router.push(`/dashboard/invoices/p13-assign-invoice-data?fileName=${selectedFile.name}`);
     } else {
-      console.error("No file selected");
+      console.error("Nincs kiválasztott fájl");
     }
   };
-
-
-
-
 
   return (
     <div className="bg-white rounded-md shadow-md"> 
@@ -36,7 +32,7 @@ const B10a3InvoiceImageDisplay: React.FC<B10a3InvoiceImageDisplayProps> = ({ sel
             </div>
           ))
         ) : (
-          <p>No invoice images available. Please upload and process a PDF invoice.</p>
+          <p>Nincs elérhető számla kép. Kérjük, töltsön fel és dolgozzon fel egy PDF számlát.</p>
         )}
       </div>
     </div>

@@ -13,7 +13,7 @@ export default function P1Orders() {
     <div className="grid gap-4 lg:grid-cols-3 grid-cols-1">
       {/* Main content area */}
       <div className="grid auto-rows-max items-start gap-4 lg:col-span-2">
-        {/* B11a and B11b components */}
+        {/* P1S1 and P1S2 components */}
         <div className="grid gap-4 sm:grid-cols-2 grid-cols-1">
           <div className="sm:col-span-2">
             <P1S1CardOrder />
@@ -32,7 +32,7 @@ export default function P1Orders() {
           />
         </div>
         
-        {/* Tabs and B11c component */}
+        {/* Tabs and P1S3 component */}
         <Tabs defaultValue="week">
           <div className="flex items-center">
             <TabsList>
@@ -82,7 +82,7 @@ export default function P1Orders() {
         </Tabs>
       </div>
 
-      {/* B11d component */}
+      {/* P1S4 component */}
       <div className="lg:col-start-3 lg:row-start-1 mt-4 lg:mt-0">
         <P1S4OrderDetails />
       </div>
