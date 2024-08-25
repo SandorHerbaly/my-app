@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+
 interface TableDataItem {
   filename: string;
   type: string;
@@ -12,13 +13,13 @@ interface TableDataItem {
   uploaded: string;
 }
 
-interface P2S2UploadedFinancialReceuptTableProps {
+interface P2S2UploadedFinancialReceiptTableProps {
   title: string;
   description: string;
   data: TableDataItem[];
 }
 
-const P2S2UploadedFinancialReceuptTable: React.FC<P2S2UploadedFinancialReceuptTableProps> = ({
+const P2S2UploadedFinancialReceiptTable: React.FC<P2S2UploadedFinancialReceiptTableProps> = ({
   title,
   description,
   data
@@ -62,4 +63,4 @@ const P2S2UploadedFinancialReceuptTable: React.FC<P2S2UploadedFinancialReceuptTa
   );
 };
 
-export default P2S2UploadedFinancialReceuptTable;
+export default P2S2UploadedFinancialReceiptTable;
