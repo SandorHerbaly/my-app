@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/use-toast";
 
 interface UploadCardProps {
   title: string;
@@ -64,14 +65,14 @@ interface P2S1CardUploadPdfReceiptsProps {
 const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ onUploadComplete }) => {
   const [uploadCounts, setUploadCounts] = useState({
     Orders: 2,
-    Invoices: 7,
+    Invoices: 6,
     'WSK Invoices': 0,
-    'Bank Statements': 3
+    'Bank Statements': 2,
   });
-  const [lastUploadDate, setLastUploadDate] = useState('August 25, 2024 at 11:55:37 AM, Emily Parker');
+  const [lastUploadDate, setLastUploadDate] = useState('August 25, 2024 at 01:33:32 PM, Emily Parker');
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
-  const [totalPdfCount, setTotalPdfCount] = useState(12);
+  const [totalPdfCount, setTotalPdfCount] = useState(10);
   const [activeTab, setActiveTab] = useState('all');
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
@@ -86,7 +87,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
   }, [uploadCounts]);
 
   const fetchRecentUploads = async () => {
-    const allFiles = [];
+    const allFiles: any[] = [];
     for (const collectionName of ['UploadedPdfOrders', 'UploadedPdfInvoices', 'UploadedWskInvoices', 'UploadedBankStatements']) {
       const q = query(collection(db, collectionName), orderBy('uploadedAt', 'desc'));
       const querySnapshot = await getDocs(q);
@@ -96,7 +97,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     }
     allFiles.sort((a, b) => b.uploadedAt.toDate() - a.uploadedAt.toDate());
     setUploadedFiles(allFiles);
-    
+
     if (allFiles.length > 0) {
       setLastUploadDate(formatDate(allFiles[0].uploadedAt, true));
     }
@@ -105,7 +106,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
       Orders: 0,
       Invoices: 0,
       'WSK Invoices': 0,
-      'Bank Statements': 0
+      'Bank Statements': 0,
     };
     allFiles.forEach(file => {
       counts[file.type]++;
@@ -131,12 +132,12 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
       day: 'numeric', 
       hour: '2-digit', 
       minute: '2-digit',
-      second: includeSeconds ? '2-digit' : undefined
+      second: includeSeconds ? '2-digit' : undefined,
     }) + ", Emily Parker";
   };
 
   const handleUpload = async (files: FileList, type: string) => {
-    const newUploadedFiles = [];
+    const newUploadedFiles: any[] = [];
     const collectionName = getCollectionName(type);
 
     for (let i = 0; i < files.length; i++) {
@@ -154,7 +155,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
           type: type,
           aiStatus: 'Not Analysed',
           uploadedBy: 'Emily Parker',
-          uploadedAt: serverTimestamp()
+          uploadedAt: serverTimestamp(),
         });
 
         const newFile = {
@@ -164,7 +165,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
           type: type,
           aiStatus: 'Not Analysed',
           uploadedAt: now,
-          uploaded: formatDate(now, true)
+          uploaded: formatDate(now, true),
         };
 
         newUploadedFiles.push(newFile);
@@ -210,7 +211,15 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     });
   };
 
+  const handleCancelDelete = () => {
+    setSelectedForDelete(new Set());
+    setIsDeleteMode(false);
+  };
+
   const handleDelete = async () => {
+    const deletedFiles: any[] = [];
+    let locationError = false;
+
     for (const id of selectedForDelete) {
       const file = uploadedFiles.find(f => f.id === id);
       if (file) {
@@ -223,13 +232,12 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
           const storageRef = ref(storage, `${collectionName}/${file.name}`);
           await deleteObject(storageRef);
 
-          // Log deletion
-          console.log(`File deleted: ${file.name} by Emily Parker at ${new Date().toISOString()}`);
+          deletedFiles.push(file);
 
           // Update counts
           setUploadCounts(prev => ({
             ...prev,
-            [file.type]: prev[file.type] - 1
+            [file.type]: prev[file.type] - 1,
           }));
         } catch (error) {
           console.error("Error deleting file:", error);
@@ -237,23 +245,100 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
       }
     }
 
+    // Log deletion
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+
+      for (const file of deletedFiles) {
+        await addDoc(collection(db, 'EventLog'), {
+          action: 'delete',
+          fileName: file.name,
+          fileType: file.type,
+          deletedBy: 'Emily Parker',
+          deletedAt: serverTimestamp(),
+          location: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error getting location:", error);
+      locationError = true;
+
+      // Log without location
+      for (const file of deletedFiles) {
+        await addDoc(collection(db, 'EventLog'), {
+          action: 'delete',
+          fileName: file.name,
+          fileType: file.type,
+          deletedBy: 'Emily Parker',
+          deletedAt: serverTimestamp(),
+          location: null,
+        });
+      }
+    }
+
     // Refresh the file list
     fetchRecentUploads();
     setSelectedForDelete(new Set());
     setIsDeleteMode(false);
+
+    // Show toast messages
+    if (deletedFiles.length > 0) {
+      toast({
+        title: deletedFiles.length === 1 ? "File Deleted" : "Files Deleted",
+        description: deletedFiles.length === 1
+          ? "The selected file was successfully deleted!"
+          : "The selected files were successfully deleted!",
+      });
+    }
+
+    if (locationError) {
+      toast({
+        title: "Location Error",
+        description: "Unable to record location data for this action.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const getAIStatusBadge = (status: string) => {
+  const getAIStatusBadge = (status: string, isSelected: boolean) => {
     return (
       <Badge 
         variant={status === "Analysed" ? "secondary" : "outline"}
         className={cn(
-          status !== "Analysed" && "border-red-500 text-red-500"
+          isSelected && status !== "Analysed" && "border-red-500 text-red-500"
         )}
       >
         {status}
       </Badge>
     );
+  };
+
+  const filterFiles = (files: any[], tab: string) => {
+    if (tab === 'all') return files;
+    return files.filter(file => file.type.toLowerCase().includes(tab.toLowerCase()));
+  };
+
+  const getTableTitle = () => {
+    if (activeTab === 'all') {
+      return `All Uploaded PDF receipts (${totalPdfCount})`;
+    } else {
+      const filteredFiles = filterFiles(uploadedFiles, activeTab);
+      const typeName = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
+      return `Uploaded ${typeName} (${filteredFiles.length})`;
+    }
+  };
+
+  const getLastUploadForType = (type: string) => {
+    const filteredFiles = filterFiles(uploadedFiles, type);
+    if (filteredFiles.length > 0) {
+      return formatDate(filteredFiles[0].uploadedAt, true);
+    }
+    return 'No uploads for this type';
   };
 
   return (
@@ -298,18 +383,22 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
       </Tabs>
 
       <div className="bg-white p-6 rounded-lg shadow mt-4">
-        <h3 className="text-lg font-semibold mb-2">All Uploaded PDF receipts ({totalPdfCount})</h3>
-        <p className="text-sm text-muted-foreground mb-4">Last upload: {lastUploadDate}</p>
+        <h3 className="text-lg font-semibold mb-2">{getTableTitle()}</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Last upload: {activeTab === 'all' ? lastUploadDate : getLastUploadForType(activeTab)}
+        </p>
 
         {isDeleteMode && (
           <div className="border border-red-500 rounded p-4 mb-4 flex justify-between items-center">
             {selectedForDelete.size === 0 ? (
-              <p className="text-red-500">Please select the uploaded pdf files to delete!</p>
+              <p className="text-red-500 font-semibold">Please select the uploaded pdf files to delete!</p>
             ) : (
               <>
-                <p className="text-red-500">Are You sure to delete {selectedForDelete.size} selected files?</p>
+                <p className="text-red-500 font-semibold">
+                  Are you sure to delete {selectedForDelete.size} selected {selectedForDelete.size === 1 ? 'file' : 'files'}?
+                </p>
                 <div>
-                  <Button variant="outline" className="mr-2" onClick={() => setIsDeleteMode(false)}>Cancel</Button>
+                  <Button variant="outline" className="mr-2" onClick={handleCancelDelete}>Cancel</Button>
                   <Button variant="destructive" onClick={handleDelete}>Delete</Button>
                 </div>
               </>
@@ -320,7 +409,9 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
         <Table>
           <TableHeader>
             <TableRow>
-              {isDeleteMode && <TableHead className="text-red-500 w-[100px] text-center">Delete PDF</TableHead>}
+              {isDeleteMode && (
+                <TableHead className="text-red-500 w-[100px] text-center">Delete PDF</TableHead>
+              )}
               <TableHead>Filename</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>AI Status</TableHead>
@@ -328,28 +419,28 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
             </TableRow>
           </TableHeader>
           <TableBody>
-            {uploadedFiles
-              .filter(file => activeTab === 'all' || file.type.toLowerCase().includes(activeTab))
-              .map((file) => (
-                <TableRow key={file.id} className={selectedForDelete.has(file.id) ? "text-red-500" : ""}>
+            {filterFiles(uploadedFiles, activeTab).map((file) => {
+              const isSelected = selectedForDelete.has(file.id);
+              return (
+                <TableRow key={file.id} className={isSelected ? "text-red-500" : ""}>
                   {isDeleteMode && (
                     <TableCell className="text-center">
                       <Checkbox
-                        checked={selectedForDelete.has(file.id)}
+                        checked={isSelected}
                         onCheckedChange={() => handleCheckboxChange(file.id)}
                         className={cn(
-                          "border-2",
-                          selectedForDelete.has(file.id) ? "border-red-500 text-red-500" : "border-gray-300"
+                          isSelected && "border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:text-primary-foreground"
                         )}
                       />
                     </TableCell>
                   )}
                   <TableCell>{file.name}</TableCell>
                   <TableCell>{file.type}</TableCell>
-                  <TableCell>{getAIStatusBadge(file.aiStatus)}</TableCell>
+                  <TableCell>{getAIStatusBadge(file.aiStatus, isSelected)}</TableCell>
                   <TableCell>{formatDate(file.uploadedAt, true)}</TableCell>
                 </TableRow>
-              ))}
+              );
+            })}
           </TableBody>
         </Table>
       </div>
