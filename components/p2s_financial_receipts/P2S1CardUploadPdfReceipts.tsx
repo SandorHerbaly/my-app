@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileUp, Filter, Download } from 'lucide-react';
+import { FileUp, Filter, Download, Trash2 } from 'lucide-react';
 import { storage, db } from '@/lib/firebase.config';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp, deleteDoc, doc } from 'firebase/firestore';
 import P2S3PdfViewerDialog from './P2S3PdfViewerDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 interface UploadCardProps {
   title: string;
@@ -61,23 +63,26 @@ interface P2S1CardUploadPdfReceiptsProps {
 
 const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ onUploadComplete }) => {
   const [uploadCounts, setUploadCounts] = useState({
-    Orders: 0,
+    Orders: 2,
     Invoices: 7,
     'WSK Invoices': 0,
-    'Bank Statements': 0
+    'Bank Statements': 3
   });
-  const [lastUploadDate, setLastUploadDate] = useState('August 25, 2024 at 07:46:43 AM, Emily Parker');
+  const [lastUploadDate, setLastUploadDate] = useState('August 25, 2024 at 11:55:37 AM, Emily Parker');
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
-  const [totalPdfCount, setTotalPdfCount] = useState(7);
+  const [totalPdfCount, setTotalPdfCount] = useState(12);
   const [activeTab, setActiveTab] = useState('all');
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchRecentUploads();
   }, []);
 
   useEffect(() => {
-    setTotalPdfCount(Object.values(uploadCounts).reduce((a, b) => a + b, 0));
+    const total = Object.values(uploadCounts).reduce((sum, count) => sum + count, 0);
+    setTotalPdfCount(total);
   }, [uploadCounts]);
 
   const fetchRecentUploads = async () => {
@@ -188,12 +193,67 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     }
   };
 
-  const getAIStatusBadge = (status: string) => {
-    let variant = "outline";
-    if (status === "Analysed") {
-      variant = "secondary";
+  const toggleDeleteMode = () => {
+    setIsDeleteMode(!isDeleteMode);
+    setSelectedForDelete(new Set());
+  };
+
+  const handleCheckboxChange = (id: string) => {
+    setSelectedForDelete(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleDelete = async () => {
+    for (const id of selectedForDelete) {
+      const file = uploadedFiles.find(f => f.id === id);
+      if (file) {
+        const collectionName = getCollectionName(file.type);
+        try {
+          // Delete from Firestore
+          await deleteDoc(doc(db, collectionName, id));
+          
+          // Delete from Storage
+          const storageRef = ref(storage, `${collectionName}/${file.name}`);
+          await deleteObject(storageRef);
+
+          // Log deletion
+          console.log(`File deleted: ${file.name} by Emily Parker at ${new Date().toISOString()}`);
+
+          // Update counts
+          setUploadCounts(prev => ({
+            ...prev,
+            [file.type]: prev[file.type] - 1
+          }));
+        } catch (error) {
+          console.error("Error deleting file:", error);
+        }
+      }
     }
-    return <Badge variant={variant}>{status}</Badge>;
+
+    // Refresh the file list
+    fetchRecentUploads();
+    setSelectedForDelete(new Set());
+    setIsDeleteMode(false);
+  };
+
+  const getAIStatusBadge = (status: string) => {
+    return (
+      <Badge 
+        variant={status === "Analysed" ? "secondary" : "outline"}
+        className={cn(
+          status !== "Analysed" && "border-red-500 text-red-500"
+        )}
+      >
+        {status}
+      </Badge>
+    );
   };
 
   return (
@@ -225,6 +285,10 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
               <Filter className="mr-2 h-4 w-4" />
               Filter
             </Button>
+            <Button variant="outline" size="sm" onClick={toggleDeleteMode}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
               Export
@@ -233,13 +297,30 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
         </div>
       </Tabs>
 
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white p-6 rounded-lg shadow mt-4">
         <h3 className="text-lg font-semibold mb-2">All Uploaded PDF receipts ({totalPdfCount})</h3>
         <p className="text-sm text-muted-foreground mb-4">Last upload: {lastUploadDate}</p>
+
+        {isDeleteMode && (
+          <div className="border border-red-500 rounded p-4 mb-4 flex justify-between items-center">
+            {selectedForDelete.size === 0 ? (
+              <p className="text-red-500">Please select the uploaded pdf files to delete!</p>
+            ) : (
+              <>
+                <p className="text-red-500">Are You sure to delete {selectedForDelete.size} selected files?</p>
+                <div>
+                  <Button variant="outline" className="mr-2" onClick={() => setIsDeleteMode(false)}>Cancel</Button>
+                  <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         <Table>
           <TableHeader>
             <TableRow>
+              {isDeleteMode && <TableHead className="text-red-500 w-[100px] text-center">Delete PDF</TableHead>}
               <TableHead>Filename</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>AI Status</TableHead>
@@ -250,7 +331,19 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
             {uploadedFiles
               .filter(file => activeTab === 'all' || file.type.toLowerCase().includes(activeTab))
               .map((file) => (
-                <TableRow key={file.id}>
+                <TableRow key={file.id} className={selectedForDelete.has(file.id) ? "text-red-500" : ""}>
+                  {isDeleteMode && (
+                    <TableCell className="text-center">
+                      <Checkbox
+                        checked={selectedForDelete.has(file.id)}
+                        onCheckedChange={() => handleCheckboxChange(file.id)}
+                        className={cn(
+                          "border-2",
+                          selectedForDelete.has(file.id) ? "border-red-500 text-red-500" : "border-gray-300"
+                        )}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>{file.name}</TableCell>
                   <TableCell>{file.type}</TableCell>
                   <TableCell>{getAIStatusBadge(file.aiStatus)}</TableCell>
