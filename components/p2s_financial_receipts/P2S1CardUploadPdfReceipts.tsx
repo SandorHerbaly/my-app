@@ -341,6 +341,12 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     return 'No uploads for this type';
   };
 
+  const handleRowClick = (file: any) => {
+    if (!isDeleteMode) {
+      setSelectedPdf(file.url);
+    }
+  };
+
   return (
     <>
       <h2 className="text-3xl font-bold mb-6">Upload Financial Receipts</h2>
@@ -422,19 +428,29 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
             {filterFiles(uploadedFiles, activeTab).map((file) => {
               const isSelected = selectedForDelete.has(file.id);
               return (
-                <TableRow key={file.id} className={isSelected ? "text-red-500" : ""}>
+                <TableRow 
+                  key={file.id} 
+                  className={cn(
+                    "cursor-pointer hover:bg-blue-50 transition-colors",
+                    isSelected && "text-red-500"
+                  )}
+                  onClick={() => handleRowClick(file)}
+                >
                   {isDeleteMode && (
                     <TableCell className="text-center">
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => handleCheckboxChange(file.id)}
+                        onClick={(e) => e.stopPropagation()}
                         className={cn(
                           isSelected && "border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:text-primary-foreground"
                         )}
                       />
                     </TableCell>
                   )}
-                  <TableCell>{file.name}</TableCell>
+                  <TableCell>
+                    <span className="hover:underline">{file.name}</span>
+                  </TableCell>
                   <TableCell>{file.type}</TableCell>
                   <TableCell>{getAIStatusBadge(file.aiStatus, isSelected)}</TableCell>
                   <TableCell>{formatDate(file.uploadedAt, true)}</TableCell>
