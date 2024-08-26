@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import P2S1CardUploadPdfReceipts from '@/components/p2s_financial_receipts/P2S1CardUploadPdfReceipts';
+import P2bS1CardAnalysePdfReceipts from '@/components/p2s_financial_receipts/P2bS1CardAnalysePdfReceipts';
 
 
 const uploadCards = [
@@ -11,15 +11,16 @@ const uploadCards = [
   { title: "Bank Statements"},
 ];
 
-export default function P2aUploadFinancialReceipts() {
+export default function P2bAnalyseFinancialReceipts() {
   const handleUpload = (title: string) => {
     console.log(`Uploading ${title}`);
   };
   return (
     <div className="space-y-4">
             
-      <P2S1CardUploadPdfReceipts cards={uploadCards} onUpload={handleUpload} />
+      <P2bS1CardAnalysePdfReceipts cards={uploadCards} onUpload={handleUpload} />
 
     </div>
   );
 }
+

@@ -59,7 +59,7 @@ const breadcrumbOptions = {
     path: "/dashboard/p2_financial_receipts",
     submenu: [
       { label: "Upload Financial Receipts", path: "/dashboard/p2_financial_receipts/p2a_upload_financial_receipts" },
-      { label: "Create Invoice", path: "/dashboard/p2_financial_receipts/p2b_create_invoice" },
+      { label: "Analyse Financial Receipts", path: "/dashboard/p2_financial_receipts/p2b_analyse_financial_receipts" },
       { label: "Pending Invoices", path: "/dashboard/p2_financial_receipts/p2c_pending_invoices" },
       { label: "Paid Invoices", path: "/dashboard/p2_financial_receipts/p2d_paid_invoices" },
       { label: "Invoice Reports", path: "/dashboard/p2_financial_receipts/p2e_invoice_reports" },
