@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FileUp, Filter, Download, Trash2 } from 'lucide-react';
 import { storage, db } from '@/lib/firebase.config';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp, deleteDoc, doc, where } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp, deleteDoc, doc, where, updateDoc } from 'firebase/firestore';
 import P2S3PdfViewerDialog from './P2S3PdfViewerDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Image from 'next/image';
+import { BsFiletypePdf, BsFiletypeJson } from "react-icons/bs";
 
 interface AnalyseCardProps {
   title: string;
@@ -141,6 +142,8 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
   const [showInvalidFileAlert, setShowInvalidFileAlert] = useState(false);
   const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
   const [uploadingFiles, setUploadingFiles] = useState<any[]>([]);
+  const [isAnalyseMode, setIsAnalyseMode] = useState(false);
+  const [selectedForAnalyse, setSelectedForAnalyse] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchRecentUploads();
@@ -369,6 +372,19 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
   const toggleDeleteMode = () => {
     setIsDeleteMode(!isDeleteMode);
     setSelectedForDelete(new Set());
+    if (isAnalyseMode) {
+      setIsAnalyseMode(false);
+      setSelectedForAnalyse(new Set());
+    }
+  };
+
+  const toggleAnalyseMode = () => {
+    setIsAnalyseMode(!isAnalyseMode);
+    setSelectedForAnalyse(new Set());
+    if (isDeleteMode) {
+      setIsDeleteMode(false);
+      setSelectedForDelete(new Set());
+    }
   };
 
   const handleCheckboxChange = (id: string) => {
@@ -383,9 +399,26 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     });
   };
 
+  const handleAnalyseCheckboxChange = (id: string) => {
+    setSelectedForAnalyse(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
   const handleCancelDelete = () => {
     setSelectedForDelete(new Set());
     setIsDeleteMode(false);
+  };
+
+  const handleCancelAnalyse = () => {
+    setSelectedForAnalyse(new Set());
+    setIsAnalyseMode(false);
   };
 
   const handleDelete = async (idsToDelete: string[]) => {
@@ -481,14 +514,51 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     }
   };
 
+  const handleAnalyse = async (idsToAnalyse: string[]) => {
+    for (const id of idsToAnalyse) {
+      const file = uploadedFiles.find(f => f.id === id);
+      if (file) {
+        const collectionName = getCollectionName(file.type);
+        try {
+          await updateDoc(doc(db, collectionName, id), {
+            aiStatus: 'Analysed',
+            aiFiles: 'json,pdf',
+            analysedAt: serverTimestamp(),
+          });
+
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === id ? {...f, aiStatus: 'Analysed', aiFiles: 'json,pdf', analysedAt: new Date()} : f
+          ));
+
+          setAnalysedCounts(prev => ({
+            ...prev,
+            [file.type]: prev[file.type] + 1,
+          }));
+        } catch (error) {
+          console.error("Error analysing file:", error);
+        }
+      }
+    }
+    setSelectedForAnalyse(new Set());
+    setIsAnalyseMode(false);
+    toast({
+      title: "Analysis Complete",
+      description: "Selected files have been analysed successfully.",
+    });
+    await fetchRecentUploads();
+  };
+
   const getAIStatusBadge = (status: string, isSelected: boolean) => {
     return (
       <Badge 
         variant={status === "Analysed" ? "secondary" : status === "Uploading" ? "default" : "outline"}
         className={cn(
-          isSelected && status !== "Analysed" && "border-red-500 text-red-500"
+          isSelected && status !== "Analysed" && "border-blue-500 text-blue-500"
         )}
       >
+        {status === "Analysed" && (
+          <Image src="/Gemini_logo.png" alt="Gemini Logo" width={16} height={16} className="mr-1" />
+        )}
         {status}
       </Badge>
     );
@@ -518,7 +588,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
   };
 
   const handleRowClick = (file: any) => {
-    if (!isDeleteMode && file.aiStatus !== 'Uploading') {
+    if (!isAnalyseMode && !isDeleteMode && file.aiStatus !== 'Uploading') {
       setSelectedPdf(file.url);
     }
   };
@@ -549,7 +619,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
             <TabsTrigger value="bank statements" onClick={() => setActiveTab('bank statements')}>Bank Statements</TabsTrigger>
           </TabsList>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={toggleAnalyseMode}>
               <Image src="/Gemini_logo.png" alt="Gemini Logo" width={16} height={16} className="mr-2" />
               Analyse
             </Button>
@@ -575,6 +645,24 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
           Last analysis: {activeTab === 'all' ? lastAnalysisDate : getLastAnalysisForType(activeTab)}
         </p>
 
+        {isAnalyseMode && (
+          <div className="border border-blue-500 rounded p-4 mb-4 flex justify-between items-center">
+            {selectedForAnalyse.size === 0 ? (
+              <p className="text-blue-500 font-semibold">Please select pdf files to be analysed by Gemini!</p>
+            ) : (
+              <>
+                <p className="text-blue-500 font-semibold">
+                  Analyse {selectedForAnalyse.size} selected {selectedForAnalyse.size === 1 ? 'file' : 'files'}?
+                </p>
+                <div>
+                  <Button variant="outline" className="mr-2" onClick={handleCancelAnalyse}>Cancel</Button>
+                  <Button variant="default" onClick={() => handleAnalyse(Array.from(selectedForAnalyse))}>Analyse PDF</Button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {isDeleteMode && (
           <div className="border border-red-500 rounded p-4 mb-4 flex justify-between items-center">
             {selectedForDelete.size === 0 ? (
@@ -596,8 +684,13 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
         <Table>
           <TableHeader>
             <TableRow>
-              {isDeleteMode && (
-                <TableHead className="text-red-500 w-[100px] text-center">Delete PDF</TableHead>
+              {(isDeleteMode || isAnalyseMode) && (
+                <TableHead className={cn(
+                  "w-[100px] text-center",
+                  isDeleteMode ? "text-red-500" : "text-blue-500"
+                )}>
+                  {isDeleteMode ? "Delete PDF" : "Analyse PDF"}
+                </TableHead>
               )}
               <TableHead>Filename</TableHead>
               <TableHead>Type</TableHead>
@@ -608,7 +701,8 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
           </TableHeader>
           <TableBody>
             {[...uploadingFiles, ...filterFiles(uploadedFiles, activeTab)].map((file) => {
-              const isSelected = selectedForDelete.has(file.id);
+              const isSelectedForDelete = selectedForDelete.has(file.id);
+              const isSelectedForAnalyse = selectedForAnalyse.has(file.id);
               const isBeingDeleted = deletingFiles.has(file.id);
               const isUploading = file.aiStatus === 'Uploading';
               return (
@@ -616,20 +710,22 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                   key={file.id || file.name}
                   className={cn(
                     "cursor-pointer hover:bg-blue-50 transition-colors",
-                    isSelected && "text-red-500",
+                    isSelectedForDelete && "text-red-500",
+                    isSelectedForAnalyse && "text-blue-500",
                     isBeingDeleted && "opacity-50 line-through",
                     isUploading && "bg-blue-50"
                   )}
                   onClick={() => handleRowClick(file)}
                 >
-                  {isDeleteMode && (
+                  {(isDeleteMode || isAnalyseMode) && (
                     <TableCell className="text-center">
                       <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => handleCheckboxChange(file.id)}
+                        checked={isDeleteMode ? isSelectedForDelete : isSelectedForAnalyse}
+                        onCheckedChange={() => isDeleteMode ? handleCheckboxChange(file.id) : handleAnalyseCheckboxChange(file.id)}
                         onClick={(e) => e.stopPropagation()}
                         className={cn(
-                          isSelected && "border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:text-primary-foreground"
+                          isDeleteMode && isSelectedForDelete && "border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:text-primary-foreground",
+                          isAnalyseMode && isSelectedForAnalyse && "border-blue-500 data-[state=checked]:bg-blue-500 data-[state=checked]:text-primary-foreground"
                         )}
                         disabled={isUploading}
                       />
@@ -639,9 +735,19 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                     <span className="hover:underline">{file.name}</span>
                   </TableCell>
                   <TableCell>{file.type}</TableCell>
-                  <TableCell>{getAIStatusBadge(file.aiStatus, isSelected)}</TableCell>
-                  <TableCell>{file.aiFiles}</TableCell>
-                  <TableCell>{isUploading ? 'Uploading...' : formatDate(file.uploadedAt, true)}</TableCell>
+                  <TableCell>{getAIStatusBadge(file.aiStatus, isSelectedForAnalyse)}</TableCell>
+                  <TableCell>
+                    {file.aiFiles === 'json,pdf' ? (
+                      <div className="flex items-center space-x-1">
+                        <BsFiletypeJson className="text-gray-500" />
+                        <span className="text-gray-300">|</span>
+                        <BsFiletypePdf className="text-gray-500" />
+                      </div>
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
+                  <TableCell>{isUploading ? 'Uploading...' : formatDate(file.analysedAt || file.uploadedAt, true)}</TableCell>
                 </TableRow>
               );
             })}
