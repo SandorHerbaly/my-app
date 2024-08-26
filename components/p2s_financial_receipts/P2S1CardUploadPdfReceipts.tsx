@@ -113,6 +113,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
   const [duplicateFiles, setDuplicateFiles] = useState<string[]>([]);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [showInvalidFileAlert, setShowInvalidFileAlert] = useState(false);
+  const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchRecentUploads();
@@ -343,35 +344,48 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
   };
 
   const handleDelete = async (idsToDelete: string[]) => {
+    const filesToDelete = idsToDelete.reverse(); // Megfordítjuk a tömböt, hogy alulról felfelé töröljünk
     const deletedFiles: any[] = [];
     let locationError = false;
 
-    for (const id of idsToDelete) {
+    for (const id of filesToDelete) {
+      setDeletingFiles(prev => new Set(prev).add(id));
       const file = uploadedFiles.find(f => f.id === id);
       if (file) {
         const collectionName = getCollectionName(file.type);
         try {
-          // Delete from Firestore
+          // Törlés a Firestore-ból
           await deleteDoc(doc(db, collectionName, id));
           
-          // Delete from Storage
+          // Törlés a Storage-ból
           const storageRef = ref(storage, `${collectionName}/${file.name}`);
           await deleteObject(storageRef);
 
           deletedFiles.push(file);
 
-          // Update counts
+          // Számok frissítése
           setUploadCounts(prev => ({
             ...prev,
             [file.type]: prev[file.type] - 1,
           }));
+
+          // A fájl eltávolítása az uploadedFiles állapotból
+          setUploadedFiles(prev => prev.filter(f => f.id !== id));
+
+          // Kis késleltetés a vizuális hatás érdekében
+          await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
           console.error("Error deleting file:", error);
         }
       }
+      setDeletingFiles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
     }
 
-    // Log deletion
+    // Törlés naplózása
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject);
@@ -394,7 +408,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
       console.error("Error getting location:", error);
       locationError = true;
 
-      // Log without location
+      // Naplózás hely nélkül
       for (const file of deletedFiles) {
         await addDoc(collection(db, 'EventLog'), {
           action: 'delete',
@@ -407,12 +421,12 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
       }
     }
 
-    // Refresh the file list
-    fetchRecentUploads();
+    // Fájllista frissítése
+    await fetchRecentUploads();
     setSelectedForDelete(new Set());
     setIsDeleteMode(false);
 
-    // Show toast messages
+    // Toast üzenetek megjelenítése
     if (deletedFiles.length > 0) {
       toast({
         title: deletedFiles.length === 1 ? "File Deleted" : "Files Deleted",
@@ -553,12 +567,14 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
           <TableBody>
             {filterFiles(uploadedFiles, activeTab).map((file) => {
               const isSelected = selectedForDelete.has(file.id);
+              const isBeingDeleted = deletingFiles.has(file.id);
               return (
                 <TableRow 
                   key={file.id} 
                   className={cn(
                     "cursor-pointer hover:bg-blue-50 transition-colors",
-                    isSelected && "text-red-500"
+                    isSelected && "text-red-500",
+                    isBeingDeleted && "opacity-50 line-through"
                   )}
                   onClick={() => handleRowClick(file)}
                 >
