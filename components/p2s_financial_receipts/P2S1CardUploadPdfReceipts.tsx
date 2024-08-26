@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FileUp, Filter, Download, Trash2 } from 'lucide-react';
 import { storage, db } from '@/lib/firebase.config';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp, deleteDoc, doc, where } from 'firebase/firestore';
 import P2S3PdfViewerDialog from './P2S3PdfViewerDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +13,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface UploadCardProps {
   title: string;
@@ -24,13 +26,10 @@ interface UploadCardProps {
 const UploadCard: React.FC<UploadCardProps> = ({ title, count, lastUpload, onUpload }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [currentFileIndex, setCurrentFileIndex] = useState(0);
-  const [totalFiles, setTotalFiles] = useState(0);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       setIsUploading(true);
-      setTotalFiles(event.target.files.length);
       try {
         await onUpload(event.target.files);
       } catch (error) {
@@ -43,7 +42,6 @@ const UploadCard: React.FC<UploadCardProps> = ({ title, count, lastUpload, onUpl
       }
       setIsUploading(false);
       setUploadProgress(0);
-      setCurrentFileIndex(0);
     }
   };
 
@@ -58,11 +56,8 @@ const UploadCard: React.FC<UploadCardProps> = ({ title, count, lastUpload, onUpl
       </CardHeader>
       <CardContent className="mt-auto">
         <Progress value={uploadProgress} className="w-full mb-2" />
-        {isUploading ? (
-          <p className="text-sm font-semibold text-blue-600 mb-2">
-            Uploading file {currentFileIndex} of {totalFiles}
-          </p>
-        ) : null}
+        {/* 15px gap added here */}
+        <div className="h-[15px]"></div>
         <Button
           onClick={() => document.getElementById(`fileInput-${title}`)?.click()}
           className="w-full"
@@ -101,6 +96,9 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
   const [activeTab, setActiveTab] = useState('all');
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
+  const [invalidFiles, setInvalidFiles] = useState<string[]>([]);
+  const [duplicateFiles, setDuplicateFiles] = useState<string[]>([]);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
 
   useEffect(() => {
     fetchRecentUploads();
@@ -161,12 +159,66 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     }) + ", Emily Parker";
   };
 
+  const validateFileName = (fileName: string, type: string): boolean => {
+    if (!fileName.toLowerCase().endsWith('.pdf')) return false;
+
+    switch (type) {
+      case 'Orders':
+        return /^(S\d{5}\.pdf|Order - S\d{5}\.pdf)$/.test(fileName);
+      case 'Invoices':
+        return /^INV_\d{4}_\d{5}\.pdf$/.test(fileName);
+      case 'WSK Invoices':
+        return true; // Any PDF is allowed for now
+      case 'Bank Statements':
+        return /^\d{8}_\d{6}[A-Z]{3}\d{4}\.PDF$/.test(fileName);
+      default:
+        return false;
+    }
+  };
+
+  const checkForDuplicates = async (files: File[], type: string): Promise<string[]> => {
+    const duplicates: string[] = [];
+    const collectionName = getCollectionName(type);
+    for (const file of files) {
+      const q = query(collection(db, collectionName), where("name", "==", file.name));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        duplicates.push(file.name);
+      }
+    }
+    return duplicates;
+  };
+
   const handleUpload = async (files: FileList, type: string) => {
+    const validFiles: File[] = [];
+    const invalidFileNames: string[] = [];
+    let duplicateFileNames: string[] = [];
+
+    // Validate file names
+    for (let i = 0; i < files.length; i++) {
+      if (validateFileName(files[i].name, type)) {
+        validFiles.push(files[i]);
+      } else {
+        invalidFileNames.push(files[i].name);
+      }
+    }
+
+    // Check for duplicates
+    duplicateFileNames = await checkForDuplicates(validFiles, type);
+
+    // Set invalid and duplicate files
+    setInvalidFiles(invalidFileNames);
+    setDuplicateFiles(duplicateFileNames);
+
+    // Filter out duplicates for initial upload
+    const filesToUpload = validFiles.filter(file => !duplicateFileNames.includes(file.name));
+
+    // Upload valid, non-duplicate files
     const newUploadedFiles: any[] = [];
     const collectionName = getCollectionName(type);
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const file = filesToUpload[i];
       const storageRef = ref(storage, `${collectionName}/${file.name}`);
       
       try {
@@ -212,6 +264,27 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
       onUploadComplete(newUploadedFiles);
     }
 
+    await fetchRecentUploads();
+
+    // Show alerts for invalid files and duplicates
+    if (invalidFileNames.length > 0) {
+      toast({
+        title: "Invalid Files",
+        description: `The following files could not be uploaded due to invalid format: ${invalidFileNames.join(", ")}`,
+        variant: "destructive",
+      });
+    }
+
+    if (duplicateFileNames.length > 0) {
+      setShowDuplicateDialog(true);
+    }
+  };
+
+  const handleDuplicateOverwrite = async () => {
+    // Implement the logic to overwrite duplicate files
+    // This would involve deleting the existing files and uploading the new ones
+    setShowDuplicateDialog(false);
+    // Refresh the file list after overwriting
     await fetchRecentUploads();
   };
 
@@ -302,6 +375,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
       // Log without location
       for (const file of deletedFiles) {
         await addDoc(collection(db, 'EventLog'), {
+          action: 'delete',
           action: 'delete',
           fileName: file.name,
           fileType: file.type,
@@ -498,6 +572,36 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
           onClose={() => setSelectedPdf(null)} 
         />
       )}
+
+      {invalidFiles.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTitle>Upload Failed</AlertTitle>
+          <AlertDescription>
+            The following files could not be uploaded due to invalid format: {invalidFiles.join(", ")}
+            <br />
+            Please check the file names and try again.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate Files Detected</DialogTitle>
+            <DialogDescription>
+              The following files already exist in the database:
+              {duplicateFiles.map(file => (
+                <div key={file}>{file}</div>
+              ))}
+              Do you want to overwrite these files?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>Cancel</Button>
+            <Button onClick={handleDuplicateOverwrite}>Overwrite</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
