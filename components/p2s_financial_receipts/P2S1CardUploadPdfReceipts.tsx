@@ -13,25 +13,29 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface UploadCardProps {
   title: string;
   count: number;
   lastUpload: string;
-  onUpload: (files: FileList) => Promise<void>;
+  onUpload: (files: FileList, updateProgress: (current: number, total: number) => void) => Promise<void>;
 }
 
 const UploadCard: React.FC<UploadCardProps> = ({ title, count, lastUpload, onUpload }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [currentFileIndex, setCurrentFileIndex] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       setIsUploading(true);
+      setTotalFiles(event.target.files.length);
+      setCurrentFileIndex(0);
+      setUploadProgress(0);
       try {
-        await onUpload(event.target.files);
+        await onUpload(event.target.files, updateProgress);
       } catch (error) {
         console.error("Error during upload:", error);
         toast({
@@ -41,8 +45,12 @@ const UploadCard: React.FC<UploadCardProps> = ({ title, count, lastUpload, onUpl
         });
       }
       setIsUploading(false);
-      setUploadProgress(0);
     }
+  };
+
+  const updateProgress = (current: number, total: number) => {
+    setCurrentFileIndex(current);
+    setUploadProgress((current / total) * 100);
   };
 
   return (
@@ -55,9 +63,14 @@ const UploadCard: React.FC<UploadCardProps> = ({ title, count, lastUpload, onUpl
         <span className="text-3xl font-bold block mt-2">{count}</span>
       </CardHeader>
       <CardContent className="mt-auto">
-        <Progress value={uploadProgress} className="w-full mb-2" />
-        {/* 15px gap added here */}
-        <div className="h-[15px]"></div>
+        {isUploading && (
+          <div className="mb-2">
+            <p className="text-xs text-center mb-1">
+              Uploading file {currentFileIndex} of {totalFiles}
+            </p>
+            <Progress value={uploadProgress} className="w-full" />
+          </div>
+        )}
         <Button
           onClick={() => document.getElementById(`fileInput-${title}`)?.click()}
           className="w-full"
@@ -99,6 +112,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
   const [invalidFiles, setInvalidFiles] = useState<string[]>([]);
   const [duplicateFiles, setDuplicateFiles] = useState<string[]>([]);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [showInvalidFileAlert, setShowInvalidFileAlert] = useState(false);
 
   useEffect(() => {
     fetchRecentUploads();
@@ -164,13 +178,13 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
 
     switch (type) {
       case 'Orders':
-        return /^(S\d{5}\.pdf|Order - S\d{5}\.pdf)$/.test(fileName);
+        return /^(S\d{5}\.pdf|Order - S\d{5}\.pdf)$/i.test(fileName);
       case 'Invoices':
-        return /^INV_\d{4}_\d{5}\.pdf$/.test(fileName);
+        return /^INV_\d{4}_\d{5}\.pdf$/i.test(fileName);
       case 'WSK Invoices':
         return true; // Any PDF is allowed for now
       case 'Bank Statements':
-        return /^\d{8}_\d{6}[A-Z]{3}\d{4}\.PDF$/.test(fileName);
+        return /^\d{8}_\d{6}[A-Z]{3}\d{4}\.PDF$/i.test(fileName);
       default:
         return false;
     }
@@ -189,7 +203,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     return duplicates;
   };
 
-  const handleUpload = async (files: FileList, type: string) => {
+  const handleUpload = async (files: FileList, type: string, updateProgress: (current: number, total: number) => void) => {
     const validFiles: File[] = [];
     const invalidFileNames: string[] = [];
     let duplicateFileNames: string[] = [];
@@ -209,6 +223,12 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     // Set invalid and duplicate files
     setInvalidFiles(invalidFileNames);
     setDuplicateFiles(duplicateFileNames);
+
+    // Show alert for invalid files
+    if (invalidFileNames.length > 0) {
+      setShowInvalidFileAlert(true);
+      return; // Stop the upload process if there are invalid files
+    }
 
     // Filter out duplicates for initial upload
     const filesToUpload = validFiles.filter(file => !duplicateFileNames.includes(file.name));
@@ -247,12 +267,15 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
 
         newUploadedFiles.push(newFile);
         
-        // Update progress
+        // Update counts
         setUploadCounts(prev => ({
           ...prev,
           [type]: prev[type] + 1,
         }));
         setLastUploadDate(formatDate(now, true));
+
+        // Update progress
+        updateProgress(i + 1, filesToUpload.length);
       } catch (error) {
         console.error("Error uploading file: ", error);
       }
@@ -266,15 +289,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
 
     await fetchRecentUploads();
 
-    // Show alerts for invalid files and duplicates
-    if (invalidFileNames.length > 0) {
-      toast({
-        title: "Invalid Files",
-        description: `The following files could not be uploaded due to invalid format: ${invalidFileNames.join(", ")}`,
-        variant: "destructive",
-      });
-    }
-
+    // Show dialog for duplicate files
     if (duplicateFileNames.length > 0) {
       setShowDuplicateDialog(true);
     }
@@ -282,9 +297,16 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
 
   const handleDuplicateOverwrite = async () => {
     // Implement the logic to overwrite duplicate files
-    // This would involve deleting the existing files and uploading the new ones
+    const filesToOverwrite = duplicateFiles;
+    for (const fileName of filesToOverwrite) {
+      const file = uploadedFiles.find(f => f.name === fileName);
+      if (file) {
+        await handleDelete([file.id]);
+        // Now re-upload the file
+        // This part needs to be implemented
+      }
+    }
     setShowDuplicateDialog(false);
-    // Refresh the file list after overwriting
     await fetchRecentUploads();
   };
 
@@ -320,11 +342,11 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     setIsDeleteMode(false);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (idsToDelete: string[]) => {
     const deletedFiles: any[] = [];
     let locationError = false;
 
-    for (const id of selectedForDelete) {
+    for (const id of idsToDelete) {
       const file = uploadedFiles.find(f => f.id === id);
       if (file) {
         const collectionName = getCollectionName(file.type);
@@ -375,7 +397,6 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
       // Log without location
       for (const file of deletedFiles) {
         await addDoc(collection(db, 'EventLog'), {
-          action: 'delete',
           action: 'delete',
           fileName: file.name,
           fileType: file.type,
@@ -462,7 +483,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
             title={title}
             count={count}
             lastUpload={lastUploadDate}
-            onUpload={(files) => handleUpload(files, title)}
+            onUpload={(files, updateProgress) => handleUpload(files, title, updateProgress)}
           />
         ))}
       </div>
@@ -510,7 +531,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
                 </p>
                 <div>
                   <Button variant="outline" className="mr-2" onClick={handleCancelDelete}>Cancel</Button>
-                  <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+                  <Button variant="destructive" onClick={() => handleDelete(Array.from(selectedForDelete))}>Delete</Button>
                 </div>
               </>
             )}
@@ -573,16 +594,23 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
         />
       )}
 
-      {invalidFiles.length > 0 && (
-        <Alert variant="destructive">
-          <AlertTitle>Upload Failed</AlertTitle>
-          <AlertDescription>
-            The following files could not be uploaded due to invalid format: {invalidFiles.join(", ")}
-            <br />
-            Please check the file names and try again.
-          </AlertDescription>
-        </Alert>
-      )}
+      <Dialog open={showInvalidFileAlert} onOpenChange={setShowInvalidFileAlert}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invalid Files Detected</DialogTitle>
+            <DialogDescription>
+              The following files could not be uploaded due to invalid format:
+              {invalidFiles.map(file => (
+                <div key={file}>{file}</div>
+              ))}
+              Please check the file names and try again.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowInvalidFileAlert(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
         <DialogContent>
