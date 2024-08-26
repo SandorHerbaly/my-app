@@ -12,36 +12,61 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
+import { Progress } from "@/components/ui/progress";
 
 interface UploadCardProps {
   title: string;
   count: number;
   lastUpload: string;
-  onUpload: (files: FileList) => void;
+  onUpload: (files: FileList) => Promise<void>;
 }
 
 const UploadCard: React.FC<UploadCardProps> = ({ title, count, lastUpload, onUpload }) => {
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      onUpload(event.target.files);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [currentFileIndex, setCurrentFileIndex] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setIsUploading(true);
+      setTotalFiles(event.target.files.length);
+      try {
+        await onUpload(event.target.files);
+      } catch (error) {
+        console.error("Error during upload:", error);
+        toast({
+          title: "Upload Error",
+          description: "An error occurred during the upload process.",
+          variant: "destructive",
+        });
+      }
+      setIsUploading(false);
+      setUploadProgress(0);
+      setCurrentFileIndex(0);
     }
   };
 
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="flex-grow">
-        <div>
-          <CardTitle className="text-2xl font-medium">{title}</CardTitle>
-          <span className="text-3xl font-bold block mt-2">{count}</span>
-        </div>
-      </CardHeader>
-      <CardContent className="mt-auto">
-        <p className="text-xs text-muted-foreground mb-4">
+      <CardHeader className="flex-grow pb-2">
+        <CardTitle className="text-2xl font-medium">{title}</CardTitle>
+        <p className="text-xs text-muted-foreground">
           {count > 0 ? `Last upload: ${lastUpload}` : 'There is no uploaded pdf'}
         </p>
+        <span className="text-3xl font-bold block mt-2">{count}</span>
+      </CardHeader>
+      <CardContent className="mt-auto">
+        <Progress value={uploadProgress} className="w-full mb-2" />
+        {isUploading ? (
+          <p className="text-sm font-semibold text-blue-600 mb-2">
+            Uploading file {currentFileIndex} of {totalFiles}
+          </p>
+        ) : null}
         <Button
           onClick={() => document.getElementById(`fileInput-${title}`)?.click()}
           className="w-full"
+          disabled={isUploading}
         >
           <FileUp className="mr-2 h-4 w-4" /> Upload {title ? title.toLowerCase() : 'file'}
         </Button>
@@ -169,19 +194,25 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
         };
 
         newUploadedFiles.push(newFile);
+        
+        // Update progress
+        setUploadCounts(prev => ({
+          ...prev,
+          [type]: prev[type] + 1,
+        }));
+        setLastUploadDate(formatDate(now, true));
       } catch (error) {
         console.error("Error uploading file: ", error);
       }
     }
 
     setUploadedFiles(prevFiles => [...newUploadedFiles, ...prevFiles]);
-    setLastUploadDate(formatDate(new Date(), true));
 
     if (onUploadComplete) {
       onUploadComplete(newUploadedFiles);
     }
 
-    fetchRecentUploads();
+    await fetchRecentUploads();
   };
 
   const getCollectionName = (type: string): string => {
