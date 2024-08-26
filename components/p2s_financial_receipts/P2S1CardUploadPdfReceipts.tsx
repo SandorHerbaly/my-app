@@ -114,6 +114,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [showInvalidFileAlert, setShowInvalidFileAlert] = useState(false);
   const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
+  const [uploadingFiles, setUploadingFiles] = useState<any[]>([]);
 
   useEffect(() => {
     fetchRecentUploads();
@@ -243,6 +244,15 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
       const storageRef = ref(storage, `${collectionName}/${file.name}`);
       
       try {
+        // Add file to uploading list
+        const uploadingFile = {
+          name: file.name,
+          type: type,
+          aiStatus: 'Uploading',
+          uploadedAt: new Date(),
+        };
+        setUploadingFiles(prev => [uploadingFile, ...prev]);
+
         const snapshot = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
         const now = new Date();
@@ -275,20 +285,22 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
         }));
         setLastUploadDate(formatDate(now, true));
 
+        // Remove file from uploading list and add to uploaded files
+        setUploadingFiles(prev => prev.filter(f => f.name !== file.name));
+        setUploadedFiles(prev => [newFile, ...prev]);
+
         // Update progress
         updateProgress(i + 1, filesToUpload.length);
       } catch (error) {
         console.error("Error uploading file: ", error);
+        // Remove file from uploading list if error occurs
+        setUploadingFiles(prev => prev.filter(f => f.name !== file.name));
       }
     }
-
-    setUploadedFiles(prevFiles => [...newUploadedFiles, ...prevFiles]);
 
     if (onUploadComplete) {
       onUploadComplete(newUploadedFiles);
     }
-
-    await fetchRecentUploads();
 
     // Show dialog for duplicate files
     if (duplicateFileNames.length > 0) {
@@ -448,7 +460,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
   const getAIStatusBadge = (status: string, isSelected: boolean) => {
     return (
       <Badge 
-        variant={status === "Analysed" ? "secondary" : "outline"}
+        variant={status === "Analysed" ? "secondary" : status === "Uploading" ? "default" : "outline"}
         className={cn(
           isSelected && status !== "Analysed" && "border-red-500 text-red-500"
         )}
@@ -482,7 +494,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
   };
 
   const handleRowClick = (file: any) => {
-    if (!isDeleteMode) {
+    if (!isDeleteMode && file.aiStatus !== 'Uploading') {
       setSelectedPdf(file.url);
     }
   };
@@ -565,16 +577,18 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filterFiles(uploadedFiles, activeTab).map((file) => {
+            {[...uploadingFiles, ...filterFiles(uploadedFiles, activeTab)].map((file) => {
               const isSelected = selectedForDelete.has(file.id);
               const isBeingDeleted = deletingFiles.has(file.id);
+              const isUploading = file.aiStatus === 'Uploading';
               return (
                 <TableRow 
-                  key={file.id} 
+                  key={file.id || file.name}
                   className={cn(
                     "cursor-pointer hover:bg-blue-50 transition-colors",
                     isSelected && "text-red-500",
-                    isBeingDeleted && "opacity-50 line-through"
+                    isBeingDeleted && "opacity-50 line-through",
+                    isUploading && "bg-blue-50"
                   )}
                   onClick={() => handleRowClick(file)}
                 >
@@ -587,6 +601,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
                         className={cn(
                           isSelected && "border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:text-primary-foreground"
                         )}
+                        disabled={isUploading}
                       />
                     </TableCell>
                   )}
@@ -595,7 +610,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
                   </TableCell>
                   <TableCell>{file.type}</TableCell>
                   <TableCell>{getAIStatusBadge(file.aiStatus, isSelected)}</TableCell>
-                  <TableCell>{formatDate(file.uploadedAt, true)}</TableCell>
+                  <TableCell>{isUploading ? 'Uploading...' : formatDate(file.uploadedAt, true)}</TableCell>
                 </TableRow>
               );
             })}
