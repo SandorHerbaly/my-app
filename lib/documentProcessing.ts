@@ -359,53 +359,81 @@ const promptTemplates = {
 };
 
 export async function processDocument(req: NextRequest, documentType: string) {
-try {
-  const { filename } = await req.json();
-  const file = storage.file(`${documentType.toLowerCase()}/${filename}`);
-  const [exists] = await file.exists();
-  if (!exists) {
-    throw new Error(`File not found: ${documentType.toLowerCase()}/${filename}`);
+  try {
+    const { filename } = await req.json();
+    console.log(`Processing ${documentType} document: ${filename}`);
+
+    const file = storage.file(`${documentType.toLowerCase()}/${filename}`);
+    const [exists] = await file.exists();
+    if (!exists) {
+      throw new Error(`File not found: ${documentType.toLowerCase()}/${filename}`);
+    }
+
+    const [url] = await file.getSignedUrl({
+      action: 'read',
+      expires: Date.now() + 15 * 60 * 1000,
+    });
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    const dataToSend = Buffer.from(buffer).toString('base64');
+    const mimeType = filename.endsWith('.pdf') ? 'application/pdf' : 'image/png';
+
+    console.log(`Sending ${filename} to Gemini AI for analysis`);
+    console.log(`Prompt template for ${documentType}:`, promptTemplates[documentType].text);
+
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: dataToSend,
+          mimeType: mimeType
+        }
+      },
+      { text: promptTemplates[documentType].text }
+    ]);
+
+    console.log(`Received response from Gemini AI for ${filename}`);
+
+    let generatedJson = result.response.text()
+      .replace(/^\s*```json\s*/, '')
+      .replace(/\s*```\s*$/, '')
+      .replace(/\n/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/,(?=\s*})/g, '')
+      .trim();
+
+    const parsedJson = JSON.parse(generatedJson);
+    console.log(`Parsed JSON response for ${filename}:`, JSON.stringify(parsedJson, null, 2));
+
+    let collectionName;
+    switch (documentType) {
+      case 'Orders':
+        collectionName = 'AiOrdersCollection';
+        break;
+      case 'Invoices':
+        collectionName = 'AiInvoicesCollection';
+        break;
+      case 'WSK Invoices':
+        collectionName = 'AiWskInvoicesCollection';
+        break;
+      case 'Bank Statements':
+        collectionName = 'AiBankStatementCollection';
+        break;
+      default:
+        throw new Error('Invalid document type');
+    }
+
+    const docRef = firestore.collection(collectionName).doc(filename);
+    await docRef.set(parsedJson);
+    console.log(`Saved analysis result for ${filename} to ${collectionName}`);
+
+    return NextResponse.json({ text: JSON.stringify(parsedJson) });
+  } catch (error) {
+    console.error(`Error processing ${documentType}:`, error);
+    return NextResponse.json({ error: `Failed to analyze ${documentType}`, details: error.message }, { status: 500 });
   }
-
-  const [url] = await file.getSignedUrl({
-    action: 'read',
-    expires: Date.now() + 15 * 60 * 1000,
-  });
-
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to download file: ${response.statusText}`);
-  }
-
-  const buffer = await response.arrayBuffer();
-  const dataToSend = Buffer.from(buffer).toString('base64');
-  const mimeType = filename.endsWith('.pdf') ? 'application/pdf' : 'image/png';
-
-  const result = await model.generateContent([
-    {
-      inlineData: {
-        data: dataToSend,
-        mimeType: mimeType
-      }
-    },
-    { text: promptTemplates[documentType].text }
-  ]);
-
-  let generatedJson = result.response.text()
-    .replace(/^\s*```json\s*/, '')
-    .replace(/\s*```\s*$/, '')
-    .replace(/\n/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/,(?=\s*})/g, '')
-    .trim();
-
-  const parsedJson = JSON.parse(generatedJson);
-  const docRef = firestore.collection(`AI-${documentType.replace(' ', '')}`).doc(filename);
-  await docRef.set(parsedJson);
-
-  return NextResponse.json({ text: JSON.stringify(parsedJson) });
-} catch (error) {
-  console.error(`Error processing ${documentType}:`, error);
-  return NextResponse.json({ error: `Failed to analyze ${documentType}`, details: error.message }, { status: 500 });
-}
 }

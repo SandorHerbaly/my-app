@@ -514,20 +514,42 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     }
   };
 
+
+  const [isAnalysing, setIsAnalysing] = useState(false);
+
   const handleAnalyse = async (idsToAnalyse: string[]) => {
+    setIsAnalysing(true);
     for (const id of idsToAnalyse) {
       const file = uploadedFiles.find(f => f.id === id);
       if (file) {
         const collectionName = getCollectionName(file.type);
         try {
+          const response = await fetch('/api/00_document_processing_gateway', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              documentType: file.type,
+              filename: file.name,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Processing failed with status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
           await updateDoc(doc(db, collectionName, id), {
             aiStatus: 'Analysed',
             aiFiles: 'json,pdf',
             analysedAt: serverTimestamp(),
+            aiResult: result,
           });
 
           setUploadedFiles(prev => prev.map(f => 
-            f.id === id ? {...f, aiStatus: 'Analysed', aiFiles: 'json,pdf', analysedAt: new Date()} : f
+            f.id === id ? {...f, aiStatus: 'Analysed', aiFiles: 'json,pdf', analysedAt: new Date(), aiResult: result} : f
           ));
 
           setAnalysedCounts(prev => ({
@@ -536,11 +558,17 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
           }));
         } catch (error) {
           console.error("Error analysing file:", error);
+          toast({
+            title: "Analysis Error",
+            description: `Failed to analyse ${file.name}. Please try again.`,
+            variant: "destructive",
+          });
         }
       }
     }
     setSelectedForAnalyse(new Set());
     setIsAnalyseMode(false);
+    setIsAnalysing(false);
     toast({
       title: "Analysis Complete",
       description: "Selected files have been analysed successfully.",
@@ -717,7 +745,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                   )}
                   onClick={() => handleRowClick(file)}
                 >
-                  {(isDeleteMode || isAnalyseMode) && (
+{(isDeleteMode || isAnalyseMode) && (
                     <TableCell className="text-center">
                       <Checkbox
                         checked={isDeleteMode ? isSelectedForDelete : isSelectedForAnalyse}
@@ -798,8 +826,23 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isAnalysing}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Analysing Documents</DialogTitle>
+            <DialogDescription>
+              The analysis process may take a few minutes. Please be patient...
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center">
+            <Progress value={100} className="w-[60%]" />
+          </div>
+        </DialogContent>
+      </Dialog>      
     </>
   );
 };
+
 
 export default P2bS1CardAnalysePdfReceipts;

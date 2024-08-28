@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     const { documentType, filename } = await req.json();
+    console.log(`Gateway received document: ${filename} of type ${documentType}`);
 
     let processingEndpoint;
     switch (documentType) {
@@ -22,6 +23,8 @@ export async function POST(req: NextRequest) {
         throw new Error('Invalid document type');
     }
 
+    console.log(`Forwarding ${filename} to ${processingEndpoint}`);
+
     const response = await fetch(`${req.nextUrl.origin}${processingEndpoint}`, {
       method: 'POST',
       headers: {
@@ -35,6 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await response.json();
+    console.log(`Gateway received response for ${filename}, forwarding to client`);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error in gateway:', error);
