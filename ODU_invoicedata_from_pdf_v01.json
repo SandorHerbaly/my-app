@@ -1,1 +1,91 @@
-{"szamla_szam": "INV/2024/01441", "kibocsato": "WESTech HU Kft.", "kibocsato_cim": "Váci út 91. IV. emelet\nBudapest 1139\nMagyarország", "kibocsato_adoszam": "23807341-2-41", "kibocsato_bankszamlaszam": "HU20 1040 2166 5052 7066 8453 1004 - K&H Bank Zrt.", "vevo": "Vörösko Kereskedelmi és Szolgáltató Kft.", "vevo_cim": "Veszprém\nPápai út 36.\n8200 Magyarország", "vevo_adoszam": "10233342-2-19", "vevo_kozossegi_adoszam": "10233342-2-19", "szamla_kelte": "2024-07-22", "teljesites_datum": "2024-07-22", "fizetesi_feltetel": null, "fizetesi_hatarido": "2024-10-20", "tetelek": [{"megnevezes": "(GTDJICPOS000021301HU) DJI OM 6 Cikkszám:\nCP.OS.00000213.01 EAN: 6941565939005", "mennyiseg": "1.00", "egysegar": "47.567,00", "netto_ar": "47.567 Ft", "ado_kulcs": "27%", "ado_osszeg": "12.843 Ft", "brutto_ar": "60.410 Ft"}, {"megnevezes": "(GTDJICPOS0000028401HU) DJI OM 6 (Platinum Gray)\nCikkszám: CP.OS.00000284.01 EAN: 6941565965387", "mennyiseg": "1.00", "egysegar": "47.567,00", "netto_ar": "47.567 Ft", "ado_kulcs": "27%", "ado_osszeg": "12.843 Ft", "brutto_ar": "60.410 Ft"}], "netto_osszeg": "95.134 Ft", "osszesen": "120.820 Ft", "fizetendo_osszeg": "120.820 Ft", "megjegyzesek": "https://online.westech.hu | info@westech.hu | +36 30 148 4883", "oldalszam": "1 / 2"}
+{
+  "[f-001] pdf-text": "Full extracted text goes here",
+  "szamla_szam": {
+    "[f-01] szla_prefix": "",
+    "[f-02] szla_year": "",
+    "[f-03] ODU_szamlaszam": "",
+    "[f-00] penznem": "HUF"  
+  },
+  "kibocsato": {
+    "[f-04] cegnev": "",
+    "cim": {
+      "[f-08] orszag": "",
+      "[f-05] telepules": "",
+      "[f-07] iranyitoszam": "",
+      "[f-06] utca_hsz": ""
+    },
+    "[f-09] adoszam": "",
+    "bankszamla": {
+      "[f-10] szamlaszam": "",
+      "[f-11] bank": ""
+    },
+    "[f-19] ODU_rendeles_szam": "A Forrás alatti két karakterlánc első S betűvel kezdődő része",
+    "[f-20] I6_rendeles_szam": "A Forrás második COR prefixel kezdődő része",
+    "[f-21] I6_szamlaszam": "A referencia alatti azonosító szám"
+  },
+  "vevo": {
+    "[f-12] cegnev": "",
+    "cim": {
+      "[f-16] orszag": "",
+      "[f-13] telepules": "",
+      "[f-15] iranyitoszam": "",
+      "[f-14] utca_hsz": ""
+    },
+    "[f-17] adoszam": "",
+    "[f-18] kozossegi_adoszam": "Ha a 'Közösségi adószám' szöveg nincs rajta a számlán, akkor a mező értéke null legyen"
+  },
+  "datumok": {
+    "[f-22] szamla_kelte": "",
+    "[f-23] teljesites_datuma": "",
+    "[f-24] fizetesi_feltetel": "",
+    "[f-25] fizetesi_hatarido": ""
+  },
+  "tetel": [
+    {
+      "tetel-sor": 1,
+      "termek-tetel":{
+          "[f-26] I6_cikkszam": "A leírás kapcsos zárójelekkel jelölt része",
+          "[f-27] termek_megnevezes": "A leírás a ']' kapcsos zárójel és a 'Cikkszám:' kifejezés közötti szöveges rész. A leírás sortörést is tartalmaz, azt nem kell figyelembe venni. A termek_megnevezes mezőbe csak a termék nevét kell beilleszteni.",
+          "termek-csoport": "A termék megnevezésből kell meghatározni. Ha a megnevezésben szerepel a DJI szó, akkor a termékcsoport DJI, ha a Roborock szó van a termék megnevezésben, akkor Roborock legyen a termékcsoport neve",
+          "[f-28] Cikkszam": "A 'Cikkszám:' és az 'EAN:' szövegek közötti része a leírásnak",
+          "[f-29] EAN": "A leírásban szereplő 'EAN:' szöveg utáni rész",
+          "[f-31] tetel_mennyiseg": "",
+          "[f-32] tetel_egyseg_ar": "",
+          "[f-33] tetel_netto_ar": "",
+          "[f-34] tetel_ado_mertek": "...%",
+          "[f-35] tetel_ado_osszeg": "",
+          "[f-36] tetel_brutto_ar": ""
+      }
+    },
+    {
+      "tetel-sor": 2,
+      "szallitasi-dij-tetel":{
+          "[f-30] Kiszállítási díj":"Amennyiben a '[T2] Transport to clients' szöveg van az f-30-as mezőben, akkor azt a Leírásban új tételként kell kezelni, '[T2] Transport to clients' néven.",
+          "[f-31] tetel_mennyiseg": "",
+          "[f-32] tetel_egyseg_ar": "",
+          "[f-33] tetel_netto_ar": "",
+          "[f-34] tetel_ado_mertek": "...%",
+          "[f-35] tetel_ado_osszeg": "",
+          "[f-36] tetel_brutto_ar": ""
+      }
+    }
+  ],
+  "ado": {
+    "[f-40] ado_alap": "",
+    "[f-41] ado_osszeg": ""
+  },
+  "osszegek": {
+    "[f-37] fizetendo_netto_osszeg": "",
+    "[f-38] fizetendo_brutto_osszeg": "",
+    "[f-39] fizetendo_osszeg": ""
+  },
+  "[f-42] szamla_megjegyezesek": "",
+  "szamla_lablec": {
+    "elerhetoseg": {
+      "[f-43] honlap": "",
+      "[f-44] email": "",
+      "[f-45] telefon": ""
+    }
+  },
+  "[f-46] oldal": "A kettőspont utáni string",
+}

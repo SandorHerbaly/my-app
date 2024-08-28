@@ -1,3 +1,5 @@
+// api/analyze-invoice/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import admin from 'firebase-admin';
@@ -197,13 +199,25 @@ export async function POST(req: NextRequest) {
 
     try {
       const parsedJson = JSON.parse(generatedJson);
-      console.log('Valid JSON generated:', JSON.stringify(parsedJson, null, 2));
+      console.log('Gemini elemzés eredménye:', JSON.stringify(parsedJson, null, 2));
 
-      const docRef = firestore.collection('AI-Invoices').doc(filename);
+      const aiFileName = `AI_${filename.replace('.pdf', '.json')}`;
+      const docRef = firestore.collection('AI-Invoices').doc(aiFileName);
       await docRef.set(parsedJson);
-      console.log('JSON saved to Firestore');
+      console.log(`AI elemzés eredménye elmentve: ${aiFileName}`);
 
-      return NextResponse.json({ text: JSON.stringify(parsedJson) });
+      // EventLog bejegyzés
+      await firestore.collection('EventLog').add({
+        action: 'analyse',
+        fileName: filename,
+        aiFileName: aiFileName,
+        collection: 'AI-Invoices',
+        analysedBy: 'Emily Parker',
+        analysedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      console.log('EventLog bejegyzés létrehozva');
+
+      return NextResponse.json({ text: JSON.stringify(parsedJson), aiFileName });
     } catch (error) {
       console.error('JSON parsing failed. Raw response:', generatedJson);
       throw new Error('Invalid JSON generated');

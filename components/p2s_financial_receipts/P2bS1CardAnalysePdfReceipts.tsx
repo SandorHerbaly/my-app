@@ -144,6 +144,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
   const [uploadingFiles, setUploadingFiles] = useState<any[]>([]);
   const [isAnalyseMode, setIsAnalyseMode] = useState(false);
   const [selectedForAnalyse, setSelectedForAnalyse] = useState<Set<string>>(new Set());
+  const [selectedJson, setSelectedJson] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRecentUploads();
@@ -547,6 +548,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
 
 
   const analysePdf = async (file: any) => {
+    console.log(`Kezdődik a(z) ${file.name} elemzése...`);
     const response = await fetch('/api/analyze-invoice', {
       method: 'POST',
       headers: {
@@ -562,47 +564,53 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     }
 
     const result = await response.json();
+    console.log('Gemini elemzés eredménye:', JSON.stringify(result, null, 2));
 
+    const aiFileName = result.aiFileName;
     const collectionName = getCollectionName(file.type);
     await updateDoc(doc(db, collectionName, file.id), {
       aiStatus: 'Analysed',
       aiFiles: 'json,pdf',
       analysedAt: serverTimestamp(),
-      aiResult: result,
+      aiResult: result.text,
+      aiFileName: aiFileName,
+    });
+
+    // EventLog bejegyzés
+    await addDoc(collection(db, 'EventLog'), {
+      action: 'analyse',
+      fileName: file.name,
+      aiFileName: aiFileName,
+      fileType: file.type,
+      collection: collectionName,
+      analysedBy: 'Emily Parker',
+      analysedAt: serverTimestamp(),
     });
 
     setUploadedFiles(prev => prev.map(f => 
-      f.id === file.id ? {...f, aiStatus: 'Analysed', aiFiles: 'json,pdf', analysedAt: new Date(), aiResult: result} : f
+      f.id === file.id ? {...f, aiStatus: 'Analysed', aiFiles: 'json,pdf', analysedAt: new Date(), aiResult: result.text, aiFileName} : f
     ));
 
     setAnalysedCounts(prev => ({
       ...prev,
       [file.type]: prev[file.type] + 1,
     }));
+
+    console.log(`A(z) ${file.name} elemzése befejeződött és az eredmény elmentve a Firestore-ba.`);
   };
 
-
-
-  const getAIStatusBadge = (status: string, isSelected: boolean) => {
-    return (
-      <Badge 
-        variant={status === "Analysed" ? "secondary" : status === "Uploading" ? "default" : "outline"}
-        className={cn(
-          isSelected && status !== "Analysed" && "border-blue-500 text-blue-500"
-        )}
-      >
-        {status === "Analysed" && (
-          <Image src="/Gemini_logo.png" alt="Gemini Logo" width={16} height={16} className="mr-1" />
-        )}
-        {status}
-      </Badge>
-    );
+  const handleRowClick = (file: any) => {
+    if (!isAnalyseMode && !isDeleteMode && file.aiStatus !== 'Uploading') {
+      setSelectedPdf(file.url);
+    }
   };
 
-  const filterFiles = (files: any[], tab: string) => {
-    if (tab === 'all') return files;
-    return files.filter(file => file.type.toLowerCase().includes(tab.toLowerCase()));
+  const handleJsonClick = (file: any) => {
+    if (file.aiStatus === 'Analysed') {
+      setSelectedJson(JSON.stringify(file.aiResult, null, 2));
+    }
   };
+
 
   const getTableTitle = () => {
     if (activeTab === 'all') {
@@ -622,10 +630,25 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     return 'No analysis for this type';
   };
 
-  const handleRowClick = (file: any) => {
-    if (!isAnalyseMode && !isDeleteMode && file.aiStatus !== 'Uploading') {
-      setSelectedPdf(file.url);
-    }
+  const filterFiles = (files: any[], tab: string) => {
+    if (tab === 'all') return files;
+    return files.filter(file => file.type.toLowerCase().includes(tab.toLowerCase()));
+  };
+
+  const getAIStatusBadge = (status: string, isSelected: boolean) => {
+    return (
+      <Badge 
+        variant={status === "Analysed" ? "secondary" : status === "Uploading" ? "default" : "outline"}
+        className={cn(
+          isSelected && status !== "Analysed" && "border-blue-500 text-blue-500"
+        )}
+      >
+        {status === "Analysed" && (
+          <Image src="/Gemini_logo.png" alt="Gemini Logo" width={16} height={16} className="mr-1" />
+        )}
+        {status}
+      </Badge>
+    );
   };
 
   return (
@@ -752,7 +775,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                   )}
                   onClick={() => handleRowClick(file)}
                 >
-{(isDeleteMode || isAnalyseMode) && (
+                  {(isDeleteMode || isAnalyseMode) && (
                     <TableCell className="text-center">
                       <Checkbox
                         checked={isDeleteMode ? isSelectedForDelete : isSelectedForAnalyse}
@@ -773,10 +796,21 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                   <TableCell>{getAIStatusBadge(file.aiStatus, isSelectedForAnalyse)}</TableCell>
                   <TableCell>
                     {file.aiFiles === 'json,pdf' ? (
-                      <div className="flex items-center space-x-1">
-                        <BsFiletypeJson className="text-gray-500" />
-                        <span className="text-gray-300">|</span>
-                        <BsFiletypePdf className="text-gray-500" />
+                      <div className="flex items-center space-x-2">
+                        <BsFiletypePdf 
+                          className="text-gray-500 cursor-pointer" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPdf(file.url);
+                          }}
+                        />
+                        <BsFiletypeJson 
+                          className="text-gray-500 cursor-pointer" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleJsonClick(file);
+                          }}
+                        />
                       </div>
                     ) : (
                       '-'
@@ -795,6 +829,19 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
           pdfUrl={selectedPdf} 
           onClose={() => setSelectedPdf(null)} 
         />
+      )}
+
+      {selectedJson && (
+        <Dialog open={!!selectedJson} onOpenChange={() => setSelectedJson(null)}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>AI Analysis Result</DialogTitle>
+            </DialogHeader>
+            <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
+              {selectedJson}
+            </pre>
+          </DialogContent>
+        </Dialog>
       )}
 
       <Dialog open={showInvalidFileAlert} onOpenChange={setShowInvalidFileAlert}>
@@ -846,10 +893,9 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
             <Progress value={100} className="w-[60%]" />
           </div>
         </DialogContent>
-      </Dialog>      
+      </Dialog>
     </>
   );
 };
-
 
 export default P2bS1CardAnalysePdfReceipts;
