@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface P2S3PdfViewerDialogProps {
   pdfUrl: string;
@@ -43,6 +43,9 @@ const P2S3PdfViewerDialog: React.FC<P2S3PdfViewerDialogProps> = ({ pdfUrl, onClo
             />
           )}
         </div>
+        <DialogDescription className="sr-only">
+          PDF document viewer displaying the selected file
+        </DialogDescription>
       </DialogContent>
     </Dialog>
   );

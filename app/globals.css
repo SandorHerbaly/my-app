@@ -51,6 +51,18 @@
     --chart-5: 230 70% 50%;
   }
 
+  .gemini-logo-large {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+  }
+  
+  .gemini-logo-small {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;

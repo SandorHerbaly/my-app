@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import B10UploadAndSavePdfInvoices from '@/components/B10-UploadAndSavePdfInvoices';
+//import B10UploadAndSavePdfInvoices from '@/components/B10-UploadAndSavePdfInvoices';
 import B12AssignInvoiceData from '@/components/B12-AssignInvoiceData'; 
 
 function InvoicesPage() {

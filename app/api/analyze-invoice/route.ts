@@ -43,13 +43,13 @@ const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 export async function POST(req: NextRequest) {
   console.log('Received analyze-invoice POST request');
   try {
-    const { filename } = await req.json();
-    console.log(`Processing file: ${filename}`);
+    const { pdf_filename } = await req.json();
+    console.log(`Processing file: ${pdf_filename}`);
 
-    const file = storage.file(`invoices/${filename}`);
+    const file = storage.file(`invoices/${pdf_filename}`);
     const [exists] = await file.exists();
     if (!exists) {
-      throw new Error(`File not found: invoices/${filename}`);
+      throw new Error(`File not found: invoices/${pdf_filename}`);
     }
 
     const [url] = await file.getSignedUrl({
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     let dataToSend: string;
     let mimeType: string;
 
-    if (filename.endsWith('.pdf')) {
+    if (pdf_filename.endsWith('.pdf')) {
       mimeType = 'application/pdf';
       dataToSend = Buffer.from(buffer).toString('base64');
     } else { 
@@ -201,29 +201,33 @@ export async function POST(req: NextRequest) {
       const parsedJson = JSON.parse(generatedJson);
       console.log('Gemini elemzés eredménye:', JSON.stringify(parsedJson, null, 2));
 
-      const aiFileName = `AI_${filename.replace('.pdf', '.json')}`;
-      const docRef = firestore.collection('AI-Invoices').doc(aiFileName);
+      const ai_json_filename = `AI_${pdf_filename.replace('.pdf', '.json')}`;
+      const docRef = firestore.collection('AI-Invoices').doc(ai_json_filename);
       await docRef.set(parsedJson);
-      console.log(`AI elemzés eredménye elmentve: ${aiFileName}`);
+      console.log(`AI elemzés eredménye elmentve: ${ai_json_filename}`);
 
       // EventLog bejegyzés
-      await firestore.collection('EventLog').add({
-        action: 'analyse',
-        fileName: filename,
-        aiFileName: aiFileName,
+      const eventLogRef = await firestore.collection('EventLog').add({
+        action: 'analyse document',
+        fileName: pdf_filename,
+        aiFileName: ai_json_filename,
         collection: 'AI-Invoices',
         analysedBy: 'Emily Parker',
         analysedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      console.log('EventLog bejegyzés létrehozva');
+      console.log(`EventLog bejegyzés létrehozva: ${eventLogRef.id}`);
 
-      return NextResponse.json({ text: JSON.stringify(parsedJson), aiFileName });
+      return NextResponse.json({ 
+        text: JSON.stringify(parsedJson), 
+        ai_json_filename,
+        eventLogId: eventLogRef.id
+      });
     } catch (error) {
-      console.error('JSON parsing failed. Raw response:', generatedJson);
-      throw new Error('Invalid JSON generated');
+      console.error('Error processing invoice:', error.message);
+      return NextResponse.json({ error: 'Failed to analyze invoice', details: error.message }, { status: 500 });
     }
   } catch (error) {
-    console.error('Error processing invoice:', error.message);
+    console.error('Error processing invoice:', error.message); // Hiányzott egy } zárójel itt
     return NextResponse.json({ error: 'Failed to analyze invoice', details: error.message }, { status: 500 });
   }
 }

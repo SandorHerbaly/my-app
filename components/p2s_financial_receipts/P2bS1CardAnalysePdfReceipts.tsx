@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { FileUp, Filter, Download, Trash2 } from 'lucide-react';
 import { storage, db } from '@/lib/firebase.config';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp, deleteDoc, doc, where, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp, deleteDoc, doc, where, updateDoc, getDoc } from 'firebase/firestore';
 import P2S3PdfViewerDialog from './P2S3PdfViewerDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CopyIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
@@ -62,7 +63,11 @@ const AnalyseCard: React.FC<AnalyseCardProps> = ({ title, count, analysedCount, 
         <div className="flex justify-between items-start">
           <CardTitle className="text-2xl font-medium">{title}</CardTitle>
           {count > 0 && (
-            <Image src="/Gemini_logo.png" alt="Gemini Logo" width={32} height={32} />
+            <img 
+              src="/Gemini_logo.png" 
+              alt="Gemini Logo" 
+              className="gemini-logo-large"
+            />
           )}
         </div>
         {count > 0 ? (
@@ -144,7 +149,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
   const [uploadingFiles, setUploadingFiles] = useState<any[]>([]);
   const [isAnalyseMode, setIsAnalyseMode] = useState(false);
   const [selectedForAnalyse, setSelectedForAnalyse] = useState<Set<string>>(new Set());
-  const [selectedJson, setSelectedJson] = useState<string | null>(null);
+  const [selectedJson, setSelectedJson] = useState<{ content: string; aiFileName: string } | null>(null);
 
   useEffect(() => {
     fetchRecentUploads();
@@ -549,54 +554,85 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
 
   const analysePdf = async (file: any) => {
     console.log(`Kezdődik a(z) ${file.name} elemzése...`);
-    const response = await fetch('/api/analyze-invoice', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        filename: file.name,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Processing failed with status: ${response.status}`);
+    try {
+      const response = await fetch('/api/analyze-invoice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pdf_filename: file.name,
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server error details:', errorData);
+        throw new Error(`Processing failed with status: ${response.status}. Details: ${JSON.stringify(errorData)}`);
+      }
+  
+      const result = await response.json();
+      console.log('Gemini elemzés eredménye:', result);
+  
+      const aiFileName = result.ai_json_filename;
+      const collectionName = getCollectionName(file.type);
+      await updateDoc(doc(db, collectionName, file.id), {
+        aiStatus: 'Analysed',
+        aiFiles: 'json,pdf',
+        analysedAt: serverTimestamp(),
+        aiResult: result.text,
+        aiFileName: aiFileName,
+      });
+  
+      const eventLogRef = await addDoc(collection(db, 'EventLog'), {
+        action: 'analyse document',
+        fileName: file.name,
+        aiFileName: aiFileName,
+        fileType: file.type,
+        collection: collectionName,
+        analysedBy: 'Emily Parker',
+        analysedAt: serverTimestamp(),
+        location: await getCurrentLocation(),
+      });
+  
+      console.log(`A(z) ${file.name} elemzése befejeződött. Az ${aiFileName} eredményfájl elmentve a Firestore ${collectionName} kollekcióba.`);
+      console.log(`A(z) ${file.name} elemzésről logfile készült az EventLog gyüjteményben az alábbi néven: ${eventLogRef.id}`);
+  
+      setUploadedFiles(prev => prev.map(f => 
+        f.id === file.id ? {
+          ...f,
+          aiStatus: 'Analysed',
+          aiFiles: 'json,pdf',
+          analysedAt: new Date(),
+          aiResult: result.text,
+          aiFileName
+        } : f
+      ));
+  
+      setAnalysedCounts(prev => ({
+        ...prev,
+        [file.type]: prev[file.type] + 1,
+      }));
+  
+    } catch (error) {
+      console.error('Részletes hiba:', error);
+      throw error;
     }
+  };
 
-    const result = await response.json();
-    console.log('Gemini elemzés eredménye:', JSON.stringify(result, null, 2));
-
-    const aiFileName = result.aiFileName;
-    const collectionName = getCollectionName(file.type);
-    await updateDoc(doc(db, collectionName, file.id), {
-      aiStatus: 'Analysed',
-      aiFiles: 'json,pdf',
-      analysedAt: serverTimestamp(),
-      aiResult: result.text,
-      aiFileName: aiFileName,
-    });
-
-    // EventLog bejegyzés
-    await addDoc(collection(db, 'EventLog'), {
-      action: 'analyse',
-      fileName: file.name,
-      aiFileName: aiFileName,
-      fileType: file.type,
-      collection: collectionName,
-      analysedBy: 'Emily Parker',
-      analysedAt: serverTimestamp(),
-    });
-
-    setUploadedFiles(prev => prev.map(f => 
-      f.id === file.id ? {...f, aiStatus: 'Analysed', aiFiles: 'json,pdf', analysedAt: new Date(), aiResult: result.text, aiFileName} : f
-    ));
-
-    setAnalysedCounts(prev => ({
-      ...prev,
-      [file.type]: prev[file.type] + 1,
-    }));
-
-    console.log(`A(z) ${file.name} elemzése befejeződött és az eredmény elmentve a Firestore-ba.`);
+  const getCurrentLocation = async (): Promise<{ latitude: number; longitude: number } | null> => {
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+      return {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      };
+    } catch (error) {
+      console.error("Error getting location:", error);
+      return null;
+    }
   };
 
   const handleRowClick = (file: any) => {
@@ -605,9 +641,57 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     }
   };
 
-  const handleJsonClick = (file: any) => {
+  const handleJsonClick = async (file: any) => {
+    console.log('JSON ikon kattintás:', file);
     if (file.aiStatus === 'Analysed') {
-      setSelectedJson(JSON.stringify(file.aiResult, null, 2));
+      console.log('File elemzett állapotban van');
+      try {
+        let content;
+        if (file.aiResult) {
+          console.log('aiResult megtalálható:', file.aiResult);
+          content = typeof file.aiResult === 'string' ? JSON.parse(file.aiResult) : file.aiResult;
+        } else {
+          console.log('aiResult hiányzik, megpróbáljuk lekérni a Firestore-ból');
+          const collectionName = getCollectionName(file.type);
+          const docRef = doc(db, collectionName, file.id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            content = docSnap.data().aiResult;
+            console.log('Firestore-ból lekért aiResult:', content);
+            
+            // Frissítsük a lokális state-et is
+            setUploadedFiles(prev => prev.map(f => 
+              f.id === file.id ? { ...f, aiResult: content } : f
+            ));
+          } else {
+            throw new Error('Nem található aiResult a dokumentumhoz');
+          }
+        }
+  
+        if (!content) {
+          throw new Error('Üres aiResult');
+        }
+  
+        console.log('Parsed aiResult:', content);
+        setSelectedJson({
+          content: JSON.stringify(content, null, 2),
+          aiFileName: file.aiFileName || `AI_${file.name.replace('.pdf', '.json')}`
+        });
+      } catch (error) {
+        console.error('Hiba a JSON adatok kezelése során:', error);
+        toast({
+          title: "JSON Error",
+          description: "Hiba történt a JSON adatok betöltése során.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      console.log('File nincs elemezve:', file.aiStatus);
+      toast({
+        title: "Not Analysed",
+        description: "Ez a fájl még nincs elemezve.",
+        variant: "warning",
+      });
     }
   };
 
@@ -644,7 +728,11 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
         )}
       >
         {status === "Analysed" && (
-          <Image src="/Gemini_logo.png" alt="Gemini Logo" width={16} height={16} className="mr-1" />
+          <img 
+            src="/Gemini_logo.png" 
+            alt="Gemini Logo" 
+            className="gemini-logo-small mr-1"
+          />
         )}
         {status}
       </Badge>
@@ -678,7 +766,11 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
           </TabsList>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={toggleAnalyseMode}>
-              <Image src="/Gemini_logo.png" alt="Gemini Logo" width={16} height={16} className="mr-2" />
+              <img 
+                src="/Gemini_logo.png" 
+                alt="Gemini Logo" 
+                className="gemini-logo-small mr-1"
+              />
               Analyse
             </Button>
             <Button variant="outline" size="sm">
@@ -738,90 +830,95 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
             )}
           </div>
         )}
-
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {(isDeleteMode || isAnalyseMode) && (
-                <TableHead className={cn(
-                  "w-[100px] text-center",
-                  isDeleteMode ? "text-red-500" : "text-blue-500"
-                )}>
-                  {isDeleteMode ? "Delete PDF" : "Analyse PDF"}
-                </TableHead>
-              )}
-              <TableHead>Filename</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>AI Status</TableHead>
-              <TableHead>AI Files</TableHead>
-              <TableHead>Date of Analysis</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[...uploadingFiles, ...filterFiles(uploadedFiles, activeTab)].map((file) => {
-              const isSelectedForDelete = selectedForDelete.has(file.id);
-              const isSelectedForAnalyse = selectedForAnalyse.has(file.id);
-              const isBeingDeleted = deletingFiles.has(file.id);
-              const isUploading = file.aiStatus === 'Uploading';
-              return (
-                <TableRow 
-                  key={file.id || file.name}
-                  className={cn(
-                    "cursor-pointer hover:bg-blue-50 transition-colors",
-                    isSelectedForDelete && "text-red-500",
-                    isSelectedForAnalyse && "text-blue-500",
-                    isBeingDeleted && "opacity-50 line-through",
-                    isUploading && "bg-blue-50"
-                  )}
-                  onClick={() => handleRowClick(file)}
-                >
-                  {(isDeleteMode || isAnalyseMode) && (
-                    <TableCell className="text-center">
-                      <Checkbox
-                        checked={isDeleteMode ? isSelectedForDelete : isSelectedForAnalyse}
-                        onCheckedChange={() => isDeleteMode ? handleCheckboxChange(file.id) : handleAnalyseCheckboxChange(file.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        className={cn(
-                          isDeleteMode && isSelectedForDelete && "border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:text-primary-foreground",
-                          isAnalyseMode && isSelectedForAnalyse && "border-blue-500 data-[state=checked]:bg-blue-500 data-[state=checked]:text-primary-foreground"
-                        )}
-                        disabled={isUploading}
-                      />
-                    </TableCell>
-                  )}
-                  <TableCell>
-                    <span className="hover:underline">{file.name}</span>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {(isDeleteMode || isAnalyseMode) && (
+              <TableHead className={cn(
+                "w-[100px] text-center",
+                isDeleteMode ? "text-red-500" : "text-blue-500"
+              )}>
+                {isDeleteMode ? "Delete PDF" : "Analyse PDF"}
+              </TableHead>
+            )}
+            <TableHead>Filename</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>AI Status</TableHead>
+            <TableHead>AI Files</TableHead>
+            <TableHead>Date of Analysis</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {[...uploadingFiles, ...filterFiles(uploadedFiles, activeTab)].map((file) => {
+            const isSelectedForDelete = selectedForDelete.has(file.id);
+            const isSelectedForAnalyse = selectedForAnalyse.has(file.id);
+            const isBeingDeleted = deletingFiles.has(file.id);
+            const isUploading = file.aiStatus === 'Uploading';
+            return (
+              <TableRow 
+                key={file.id || file.name}
+                className={cn(
+                  "cursor-pointer hover:bg-blue-50 transition-colors",
+                  isSelectedForDelete && "text-red-500",
+                  isSelectedForAnalyse && "text-blue-500",
+                  isBeingDeleted && "opacity-50 line-through",
+                  isUploading && "bg-blue-50"
+                )}
+                onClick={() => handleRowClick(file)}
+              >
+                {(isDeleteMode || isAnalyseMode) && (
+                  <TableCell className="text-center">
+                    <Checkbox
+                      checked={isDeleteMode ? isSelectedForDelete : isSelectedForAnalyse}
+                      onCheckedChange={() => isDeleteMode ? handleCheckboxChange(file.id) : handleAnalyseCheckboxChange(file.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className={cn(
+                        isDeleteMode && isSelectedForDelete && "border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:text-primary-foreground",
+                        isAnalyseMode && isSelectedForAnalyse && "border-blue-500 data-[state=checked]:bg-blue-500 data-[state=checked]:text-primary-foreground"
+                      )}
+                      disabled={isUploading}
+                    />
                   </TableCell>
-                  <TableCell>{file.type}</TableCell>
-                  <TableCell>{getAIStatusBadge(file.aiStatus, isSelectedForAnalyse)}</TableCell>
-                  <TableCell>
-                    {file.aiFiles === 'json,pdf' ? (
-                      <div className="flex items-center space-x-2">
-                        <BsFiletypePdf 
-                          className="text-gray-500 cursor-pointer" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedPdf(file.url);
-                          }}
-                        />
-                        <BsFiletypeJson 
-                          className="text-gray-500 cursor-pointer" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleJsonClick(file);
-                          }}
-                        />
+                )}
+                <TableCell>
+                  <span className="hover:underline">{file.name}</span>
+                </TableCell>
+                <TableCell>{file.type}</TableCell>
+                <TableCell>{getAIStatusBadge(file.aiStatus, isSelectedForAnalyse)}</TableCell>
+                <TableCell>
+                  {file.aiFiles === 'json,pdf' ? (
+                    <div className="flex items-center space-x-4">
+                      <div 
+                        className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPdf(file.url);
+                        }}
+                      >
+                        <BsFiletypePdf className="text-gray-500 w-5 h-5" />
                       </div>
-                    ) : (
-                      '-'
-                    )}
-                  </TableCell>
-                  <TableCell>{isUploading ? 'Uploading...' : formatDate(file.analysedAt || file.uploadedAt, true)}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                      <div className="h-4 w-px bg-gray-300"></div>
+                      <div 
+                        className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('JSON ikon kattintás esemény');
+                          handleJsonClick(file);
+                        }}
+                      >
+                        <BsFiletypeJson className="text-gray-500 w-5 h-5" />
+                      </div>
+                    </div>
+                  ) : (
+                    '-'
+                  )}
+                </TableCell>
+                <TableCell>{isUploading ? 'Uploading...' : formatDate(file.analysedAt || file.uploadedAt, true)}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
       </div>
       
       {selectedPdf && (
@@ -833,13 +930,30 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
 
       {selectedJson && (
         <Dialog open={!!selectedJson} onOpenChange={() => setSelectedJson(null)}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[80vh]">
             <DialogHeader>
-              <DialogTitle>AI Analysis Result</DialogTitle>
+              <DialogTitle className="flex justify-between items-center text-lg font-semibold">
+                <span>AI-Invoices/{selectedJson.aiFileName}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedJson.content);
+                    toast({ title: "JSON copied to clipboard" });
+                  }}
+                >
+                  <CopyIcon className="h-4 w-4" />
+                </Button>
+              </DialogTitle>
             </DialogHeader>
-            <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-              {selectedJson}
-            </pre>
+            <div className="bg-white p-4 rounded-md overflow-auto">
+              <pre className="text-sm text-blue-600 whitespace-pre-wrap">
+                {selectedJson.content}
+              </pre>
+            </div>
+            <DialogDescription className="sr-only">
+              JSON content viewer for AI analysis results
+            </DialogDescription>
           </DialogContent>
         </Dialog>
       )}
