@@ -522,40 +522,8 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     for (const id of idsToAnalyse) {
       const file = uploadedFiles.find(f => f.id === id);
       if (file) {
-        const collectionName = getCollectionName(file.type);
         try {
-          const response = await fetch('/api/00_document_processing_gateway', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              documentType: file.type,
-              filename: file.name,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`Processing failed with status: ${response.status}`);
-          }
-
-          const result = await response.json();
-
-          await updateDoc(doc(db, collectionName, id), {
-            aiStatus: 'Analysed',
-            aiFiles: 'json,pdf',
-            analysedAt: serverTimestamp(),
-            aiResult: result,
-          });
-
-          setUploadedFiles(prev => prev.map(f => 
-            f.id === id ? {...f, aiStatus: 'Analysed', aiFiles: 'json,pdf', analysedAt: new Date(), aiResult: result} : f
-          ));
-
-          setAnalysedCounts(prev => ({
-            ...prev,
-            [file.type]: prev[file.type] + 1,
-          }));
+          await analysePdf(file);
         } catch (error) {
           console.error("Error analysing file:", error);
           toast({
@@ -575,6 +543,45 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     });
     await fetchRecentUploads();
   };
+
+
+
+  const analysePdf = async (file: any) => {
+    const response = await fetch('/api/analyze-invoice', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filename: file.name,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Processing failed with status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    const collectionName = getCollectionName(file.type);
+    await updateDoc(doc(db, collectionName, file.id), {
+      aiStatus: 'Analysed',
+      aiFiles: 'json,pdf',
+      analysedAt: serverTimestamp(),
+      aiResult: result,
+    });
+
+    setUploadedFiles(prev => prev.map(f => 
+      f.id === file.id ? {...f, aiStatus: 'Analysed', aiFiles: 'json,pdf', analysedAt: new Date(), aiResult: result} : f
+    ));
+
+    setAnalysedCounts(prev => ({
+      ...prev,
+      [file.type]: prev[file.type] + 1,
+    }));
+  };
+
+
 
   const getAIStatusBadge = (status: string, isSelected: boolean) => {
     return (
