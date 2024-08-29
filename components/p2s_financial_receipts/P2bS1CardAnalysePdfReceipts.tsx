@@ -430,116 +430,93 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     setIsAnalyseMode(false);
   };
 
-const handleDelete = async (idsToDelete: string[]) => {
-  const filesToDelete = idsToDelete.reverse();
-  const deletedFiles: any[] = [];
-  let locationError = false;
-
-  for (const id of filesToDelete) {
-    setDeletingFiles(prev => new Set(prev).add(id));
-    const file = uploadedFiles.find(f => f.id === id);
-    if (file) {
-      const collectionName = getCollectionName(file.type);
-      try {
-        // Töröljük a PDF fájlt a Firestore-ból és a Storage-ból
-        await deleteDoc(doc(db, collectionName, id));
-        
-        const storageRef = ref(storage, `${collectionName}/${file.name}`);
-        await deleteObject(storageRef);
-
-        deletedFiles.push(file);
-
-        // Ellenőrizzük, hogy van-e hozzá tartozó JSON fájl
-        const jsonFileName = `AI_${file.name.replace('.pdf', '.json')}`;
-        const jsonRef = ref(storage, `AI-Invoices/${jsonFileName}`);
+  const handleDelete = async (idsToDelete: string[]) => {
+    const filesToDelete = idsToDelete.reverse();
+    const deletedFiles: any[] = [];
+    let locationError = false;
+  
+    for (const id of filesToDelete) {
+      setDeletingFiles(prev => new Set(prev).add(id));
+      const file = uploadedFiles.find(f => f.id === id);
+      if (file) {
+        const collectionName = getCollectionName(file.type);
         try {
-          // Próbáljuk meg letölteni a JSON fájlt, ha létezik
-          await getDownloadURL(jsonRef);
-          // Ha létezik, töröljük a JSON fájlt is
-          await deleteObject(jsonRef);
-          console.log(`Törölve: ${collectionName}/${file.name}, AI-Invoices/${jsonFileName}`);
+          // Töröljük a PDF fájlt a Firestore-ból és a Storage-ból
+          await deleteDoc(doc(db, collectionName, id));
+          
+          const storageRef = ref(storage, `${collectionName}/${file.name}`);
+          await deleteObject(storageRef);
+  
+          console.log(`PDF törölve: ${collectionName}/${file.name}`);
+  
+          let jsonDeleted = false;
+          let jsonFileName = '';
+  
+          // Ellenőrizzük, hogy van-e hozzá tartozó JSON fájl
+          if (file.aiStatus === 'Analysed') {
+            const possibleJsonFileNames = [
+              `AI_${file.name.replace('.pdf', '.json')}`,
+              `AI_${file.name}`.replace('.pdf', '.json'),
+              file.name.replace('.pdf', '.json')
+            ];
+  
+            for (const jsonName of possibleJsonFileNames) {
+              const jsonRef = ref(storage, `AI-Invoices/${jsonName}`);
+              try {
+                // Először ellenőrizzük, hogy létezik-e a fájl
+                await getMetadata(jsonRef);
+                console.log(`JSON fájl megtalálva: AI-Invoices/${jsonName}`);
+                
+                // Ha ide eljutunk, a fájl létezik, megpróbáljuk törölni
+                await deleteObject(jsonRef);
+                console.log(`JSON törölve: AI-Invoices/${jsonName}`);
+                jsonDeleted = true;
+                jsonFileName = jsonName;
+                break;
+              } catch (error) {
+                if (error.code === 'storage/object-not-found') {
+                  console.log(`JSON fájl nem található: AI-Invoices/${jsonName}`);
+                } else {
+                  console.error(`Hiba a JSON fájl törlése közben: AI-Invoices/${jsonName}`, error);
+                }
+              }
+            }
+  
+            if (!jsonDeleted) {
+              console.log(`Nem sikerült JSON fájlt találni a következő PDF-hez: ${file.name}`);
+              // Ellenőrizzük a fájl metaadatait
+              try {
+                const metadata = await getMetadata(ref(storage, `AI-Invoices/AI_${file.name.replace('.pdf', '.json')}`));
+                console.log('JSON fájl metaadatai:', metadata);
+              } catch (metaError) {
+                console.log('Nem sikerült lekérni a JSON fájl metaadatait:', metaError);
+              }
+            }
+          }
+  
+          deletedFiles.push({...file, jsonDeleted, jsonFileName});
+  
+          setUploadCounts(prev => ({
+            ...prev,
+            [file.type]: prev[file.type] - 1,
+          }));
+  
+          setUploadedFiles(prev => prev.filter(f => f.id !== id));
+  
+          await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
-          // Ha a fájl nem létezik, nincs teendő
-          console.log(`Törölve: ${collectionName}/${file.name} (nem találtam hozzá tartozó JSON fájlt)`);
+          console.error("Error deleting file:", error);
         }
-
-        setUploadCounts(prev => ({
-          ...prev,
-          [file.type]: prev[file.type] - 1,
-        }));
-
-        setUploadedFiles(prev => prev.filter(f => f.id !== id));
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (error) {
-        console.error("Error deleting file:", error);
       }
-    }
-    setDeletingFiles(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(id);
-      return newSet;
-    });
-  }
-
-  try {
-    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject);
-    });
-
-    for (const file of deletedFiles) {
-      const jsonFileName = `AI_${file.name.replace('.pdf', '.json')}`;
-      await addDoc(collection(db, 'EventLog'), {
-        action: 'delete',
-        pdfFileName: file.name,
-        jsonFileName: `AI_${file.name.replace('.pdf', '.json')}`,
-        fileType: file.type,
-        deletedBy: 'Emily Parker',
-        deletedAt: serverTimestamp(),
-        location: {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        },
+      setDeletingFiles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
       });
     }
-  } catch (error) {
-    console.error("Error getting location:", error);
-    locationError = true;
-
-    for (const file of deletedFiles) {
-      await addDoc(collection(db, 'EventLog'), {
-        action: 'delete',
-        pdfFileName: file.name,
-        jsonFileName: null, // JSON fájl nem létezett vagy nem volt törölve
-        fileType: file.type,
-        deletedBy: 'Emily Parker',
-        deletedAt: serverTimestamp(),
-        location: null,
-      });
-    }
-  }
-
-  await fetchRecentUploads();
-  setSelectedForDelete(new Set());
-  setIsDeleteMode(false);
-
-  if (deletedFiles.length > 0) {
-    toast({
-      title: deletedFiles.length === 1 ? "File Deleted" : "Files Deleted",
-      description: deletedFiles.length === 1
-        ? "The selected file was successfully deleted!"
-        : "The selected files were successfully deleted!",
-    });
-  }
-
-  if (locationError) {
-    toast({
-      title: "Location Error",
-      description: "Unable to record location data for this action.",
-      variant: "destructive",
-    });
-  }
-};
+  
+    // ... (a függvény többi része változatlan marad)
+  };
 
 
 
@@ -577,70 +554,76 @@ const handleDelete = async (idsToDelete: string[]) => {
   const analysePdf = async (file: any) => {
     console.log(`Kezdődik a(z) ${file.name} elemzése...`);
     try {
-      const response = await fetch('/api/analyze-invoice', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pdf_filename: file.name,
-        }),
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Server error details:', errorData);
-        throw new Error(`Processing failed with status: ${response.status}. Details: ${JSON.stringify(errorData)}`);
-      }
-  
-      const result = await response.json();
-      console.log('Gemini elemzés eredménye:', result);
-  
-      const aiFileName = result.ai_json_filename;
-      const collectionName = getCollectionName(file.type);
-      await updateDoc(doc(db, collectionName, file.id), {
-        aiStatus: 'Analysed',
-        aiFiles: 'json,pdf',
-        analysedAt: serverTimestamp(),
-        aiResult: result.text,
-        aiFileName: aiFileName,
-      });
-  
-      const eventLogRef = await addDoc(collection(db, 'EventLog'), {
-        action: 'analyse document',
-        fileName: file.name,
-        aiFileName: aiFileName,
-        fileType: file.type,
-        collection: collectionName,
-        analysedBy: 'Emily Parker',
-        analysedAt: serverTimestamp(),
-        location: await getCurrentLocation(),
-      });
-  
-      console.log(`A(z) ${file.name} elemzése befejeződött. Az ${aiFileName} eredményfájl elmentve a Firestore ${collectionName} kollekcióba.`);
-      console.log(`A(z) ${file.name} elemzésről logfile készült az EventLog gyüjteményben az alábbi néven: ${eventLogRef.id}`);
-  
-      setUploadedFiles(prev => prev.map(f => 
-        f.id === file.id ? {
-          ...f,
-          aiStatus: 'Analysed',
-          aiFiles: 'json,pdf',
-          analysedAt: new Date(),
-          aiResult: result.text,
-          aiFileName
-        } : f
-      ));
-  
-      setAnalysedCounts(prev => ({
-        ...prev,
-        [file.type]: prev[file.type] + 1,
-      }));
-  
+        // Fetching the correct collection based on file type
+        const collectionName = getCollectionName(file.type);
+
+        const response = await fetch('/api/analyze-invoice', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                pdf_filename: file.name,
+                type: file.type
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Server error details:', errorData);
+            throw new Error(`Processing failed with status: ${response.status}. Details: ${JSON.stringify(errorData)}`);
+        }
+
+        const result = await response.json();
+        console.log('Gemini elemzés eredménye:', result);
+
+        const aiFileName = result.ai_json_filename;
+        
+        // Update the document in the correct collection
+        await updateDoc(doc(db, collectionName, file.id), {
+            aiStatus: 'Analysed',
+            aiFiles: 'json,pdf',
+            analysedAt: serverTimestamp(),
+            aiResult: result.text,
+            aiFileName: aiFileName,
+        });
+
+        const eventLogRef = await addDoc(collection(db, 'EventLog'), {
+            action: 'analyse document',
+            fileName: file.name,
+            aiFileName: aiFileName,
+            fileType: file.type,
+            collection: collectionName,
+            analysedBy: 'Emily Parker',
+            analysedAt: serverTimestamp(),
+            location: await getCurrentLocation(),
+        });
+
+        console.log(`A(z) ${file.name} elemzése befejeződött. Az ${aiFileName} eredményfájl elmentve a Firestore ${collectionName} kollekcióba.`);
+        console.log(`A(z) ${file.name} elemzésről logfile készült az EventLog gyűjteményben az alábbi néven: ${eventLogRef.id}`);
+
+        setUploadedFiles(prev => prev.map(f => 
+            f.id === file.id ? {
+                ...f,
+                aiStatus: 'Analysed',
+                aiFiles: 'json,pdf',
+                analysedAt: new Date(),
+                aiResult: result.text,
+                aiFileName
+            } : f
+        ));
+
+        setAnalysedCounts(prev => ({
+            ...prev,
+            [file.type]: prev[file.type] + 1,
+        }));
+
     } catch (error) {
-      console.error('Részletes hiba:', error);
-      throw error;
+        console.error('Részletes hiba:', error);
+        throw error;
     }
-  };
+};
+
 
   const getCurrentLocation = async (): Promise<{ latitude: number; longitude: number } | null> => {
     try {

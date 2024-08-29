@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FileUp, Filter, Download, Trash2 } from 'lucide-react';
 import { storage, db } from '@/lib/firebase.config';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp, deleteDoc, doc, where } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp, deleteDoc, doc, where, setDoc } from 'firebase/firestore';
 import P2S3PdfViewerDialog from './P2S3PdfViewerDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { h05HandleDeleteUploadedPdfFiles } from '@/lib/invoiceProcessing/h05HandleDeleteUploadedPdfFiles';
+
 
 
 
@@ -208,108 +209,120 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     return duplicates;
   };
 
+
+
   const handleUpload = async (files: FileList, type: string, updateProgress: (current: number, total: number) => void) => {
-    const validFiles: File[] = [];
-    const invalidFileNames: string[] = [];
-    let duplicateFileNames: string[] = [];
-
-    // Validate file names
-    for (let i = 0; i < files.length; i++) {
-      if (validateFileName(files[i].name, type)) {
-        validFiles.push(files[i]);
-      } else {
-        invalidFileNames.push(files[i].name);
+      const validFiles: File[] = [];
+      const invalidFileNames: string[] = [];
+      let duplicateFileNames: string[] = [];
+  
+      console.log("Fájl feltöltés elidítva...");
+  
+      // Validate file names
+      for (let i = 0; i < files.length; i++) {
+          if (validateFileName(files[i].name, type)) {
+              validFiles.push(files[i]);
+          } else {
+              invalidFileNames.push(files[i].name);
+          }
       }
-    }
-
-    // Check for duplicates
-    duplicateFileNames = await checkForDuplicates(validFiles, type);
-
-    // Set invalid and duplicate files
-    setInvalidFiles(invalidFileNames);
-    setDuplicateFiles(duplicateFileNames);
-
-    // Show alert for invalid files
-    if (invalidFileNames.length > 0) {
-      setShowInvalidFileAlert(true);
-      return; // Stop the upload process if there are invalid files
-    }
-
-    // Filter out duplicates for initial upload
-    const filesToUpload = validFiles.filter(file => !duplicateFileNames.includes(file.name));
-
-    // Upload valid, non-duplicate files
-    const newUploadedFiles: any[] = [];
-    const collectionName = getCollectionName(type);
-
-    for (let i = 0; i < filesToUpload.length; i++) {
-      const file = filesToUpload[i];
-      const storageRef = ref(storage, `${collectionName}/${file.name}`);
-      
-      try {
-        // Add file to uploading list
-        const uploadingFile = {
-          name: file.name,
-          type: type,
-          aiStatus: 'Uploading',
-          uploadedAt: new Date(),
-        };
-        setUploadingFiles(prev => [uploadingFile, ...prev]);
-
-        const snapshot = await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        const now = new Date();
-
-        const docRef = await addDoc(collection(db, collectionName), {
-          name: file.name,
-          url: downloadURL,
-          type: type,
-          aiStatus: 'Not Analysed',
-          uploadedBy: 'Emily Parker',
-          uploadedAt: serverTimestamp(),
-        });
-
-        const newFile = {
-          id: docRef.id,
-          name: file.name,
-          url: downloadURL,
-          type: type,
-          aiStatus: 'Not Analysed',
-          uploadedAt: now,
-          uploaded: formatDate(now, true),
-        };
-
-        newUploadedFiles.push(newFile);
-        
-        // Update counts
-        setUploadCounts(prev => ({
-          ...prev,
-          [type]: prev[type] + 1,
-        }));
-        setLastUploadDate(formatDate(now, true));
-
-        // Remove file from uploading list and add to uploaded files
-        setUploadingFiles(prev => prev.filter(f => f.name !== file.name));
-        setUploadedFiles(prev => [newFile, ...prev]);
-
-        // Update progress
-        updateProgress(i + 1, filesToUpload.length);
-      } catch (error) {
-        console.error("Error uploading file: ", error);
-        // Remove file from uploading list if error occurs
-        setUploadingFiles(prev => prev.filter(f => f.name !== file.name));
+  
+      // Check for duplicates
+      duplicateFileNames = await checkForDuplicates(validFiles, type);
+  
+      // Set invalid and duplicate files
+      setInvalidFiles(invalidFileNames);
+      setDuplicateFiles(duplicateFileNames);
+  
+      // Show alert for invalid files
+      if (invalidFileNames.length > 0) {
+          setShowInvalidFileAlert(true);
+          return; // Stop the upload process if there are invalid files
       }
-    }
-
-    if (onUploadComplete) {
-      onUploadComplete(newUploadedFiles);
-    }
-
-    // Show dialog for duplicate files
-    if (duplicateFileNames.length > 0) {
-      setShowDuplicateDialog(true);
-    }
+  
+      // Filter out duplicates for initial upload
+      const filesToUpload = validFiles.filter(file => !duplicateFileNames.includes(file.name));
+  
+      // Upload valid, non-duplicate files
+      const newUploadedFiles: any[] = [];
+      const collectionName = getCollectionName(type);
+  
+      for (let i = 0; i < filesToUpload.length; i++) {
+          const file = filesToUpload[i];
+          const storageRef = ref(storage, `${collectionName}/${file.name}`);
+          
+          try {
+              // Add file to uploading list
+              const uploadingFile = {
+                  name: file.name,
+                  type: type,
+                  aiStatus: 'Uploading',
+                  uploadedAt: new Date(),
+              };
+              setUploadingFiles(prev => [uploadingFile, ...prev]);
+  
+              console.log(`Feltöltés indítása: ${collectionName}/${file.name}`);
+  
+              const snapshot = await uploadBytes(storageRef, file);
+              const downloadURL = await getDownloadURL(snapshot.ref);
+              const now = new Date();
+  
+              // A dokumentum neve mostantól megegyezik a fájl nevével (kiterjesztés nélkül)
+              const docRef = doc(db, collectionName, file.name.replace(".pdf", ""));
+              await setDoc(docRef, {
+                  name: file.name,
+                  url: downloadURL,
+                  type: type,
+                  aiStatus: 'Not Analysed',
+                  uploadedBy: 'Emily Parker',
+                  uploadedAt: serverTimestamp(),
+              });
+  
+              console.log(`Sikeres feltöltés: ${collectionName}/${file.name}`);
+  
+              const newFile = {
+                  id: docRef.id,
+                  name: file.name,
+                  url: downloadURL,
+                  type: type,
+                  aiStatus: 'Not Analysed',
+                  uploadedAt: now,
+                  uploaded: formatDate(now, true),
+              };
+  
+              newUploadedFiles.push(newFile);
+              
+              // Update counts
+              setUploadCounts(prev => ({
+                  ...prev,
+                  [type]: prev[type] + 1,
+              }));
+              setLastUploadDate(formatDate(now, true));
+  
+              // Remove file from uploading list and add to uploaded files
+              setUploadingFiles(prev => prev.filter(f => f.name !== file.name));
+              setUploadedFiles(prev => [newFile, ...prev]);
+  
+              // Update progress
+              updateProgress(i + 1, filesToUpload.length);
+          } catch (error) {
+              console.error("Error uploading file: ", error);
+              // Remove file from uploading list if error occurs
+              setUploadingFiles(prev => prev.filter(f => f.name !== file.name));
+          }
+      }
+  
+      if (onUploadComplete) {
+          onUploadComplete(newUploadedFiles);
+      }
+  
+      // Show dialog for duplicate files
+      if (duplicateFileNames.length > 0) {
+          setShowDuplicateDialog(true);
+      }
   };
+  
+
 
   const handleDuplicateOverwrite = async () => {
     // Implement the logic to overwrite duplicate files

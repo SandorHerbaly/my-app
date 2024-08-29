@@ -1,5 +1,3 @@
-// api/analyze-invoice/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import admin from 'firebase-admin';
@@ -43,13 +41,32 @@ const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 export async function POST(req: NextRequest) {
   console.log('Received analyze-invoice POST request');
   try {
-    const { pdf_filename } = await req.json();
-    console.log(`Processing file: ${pdf_filename}`);
+    const { pdf_filename, type } = await req.json();
+    console.log(`Processing file: ${pdf_filename} of type: ${type}`);
 
-    const file = storage.file(`invoices/${pdf_filename}`);
+    // Dinamikusan állítsuk be a gyűjtemény nevét a típus alapján
+    let collectionName = '';
+    switch (type) {
+      case 'Invoices':
+        collectionName = 'UploadedPdfInvoices';
+        break;
+      case 'Orders':
+        collectionName = 'UploadedPdfOrders';
+        break;
+      case 'WSK Invoices':
+        collectionName = 'UploadedWskInvoices';
+        break;
+      case 'Bank Statements':
+        collectionName = 'UploadedBankStatements';
+        break;
+      default:
+        throw new Error('Unknown file type');
+    }
+
+    const file = storage.file(`${collectionName}/${pdf_filename}`);
     const [exists] = await file.exists();
     if (!exists) {
-      throw new Error(`File not found: invoices/${pdf_filename}`);
+      throw new Error(`File not found: ${collectionName}/${pdf_filename}`);
     }
 
     const [url] = await file.getSignedUrl({
@@ -227,7 +244,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to analyze invoice', details: error.message }, { status: 500 });
     }
   } catch (error) {
-    console.error('Error processing invoice:', error.message); // Hiányzott egy } zárójel itt
+    console.error('Error processing invoice:', error.message);
     return NextResponse.json({ error: 'Failed to analyze invoice', details: error.message }, { status: 500 });
   }
 }
+
