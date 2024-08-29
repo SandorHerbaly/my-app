@@ -6,6 +6,7 @@ import { storage, db } from '@/lib/firebase.config';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, Timestamp, deleteDoc, doc, where, updateDoc, getDoc } from 'firebase/firestore';
 import P2S3PdfViewerDialog from './P2S3PdfViewerDialog';
+import P2bS3JsonViewerDialog from './P2bS3JsonViewerDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -150,6 +151,8 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
   const [isAnalyseMode, setIsAnalyseMode] = useState(false);
   const [selectedForAnalyse, setSelectedForAnalyse] = useState<Set<string>>(new Set());
   const [selectedJson, setSelectedJson] = useState<{ content: string; aiFileName: string } | null>(null);
+
+  
 
   useEffect(() => {
     fetchRecentUploads();
@@ -672,9 +675,12 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
           throw new Error('Üres aiResult');
         }
   
-        console.log('Parsed aiResult:', content);
+        // Győződjünk meg róla, hogy a content biztosan objektum
+        const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+        console.log('Parsed aiResult:', parsedContent);
+        
         setSelectedJson({
-          content: JSON.stringify(content, null, 2),
+          content: JSON.stringify(parsedContent, null, 2),
           aiFileName: file.aiFileName || `AI_${file.name.replace('.pdf', '.json')}`
         });
       } catch (error) {
@@ -929,33 +935,12 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
       )}
 
       {selectedJson && (
-        <Dialog open={!!selectedJson} onOpenChange={() => setSelectedJson(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh]">
-            <DialogHeader>
-              <DialogTitle className="flex justify-between items-center text-lg font-semibold">
-                <span>AI-Invoices/{selectedJson.aiFileName}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    navigator.clipboard.writeText(selectedJson.content);
-                    toast({ title: "JSON copied to clipboard" });
-                  }}
-                >
-                  <CopyIcon className="h-4 w-4" />
-                </Button>
-              </DialogTitle>
-            </DialogHeader>
-            <div className="bg-white p-4 rounded-md overflow-auto">
-              <pre className="text-sm text-blue-600 whitespace-pre-wrap">
-                {selectedJson.content}
-              </pre>
-            </div>
-            <DialogDescription className="sr-only">
-              JSON content viewer for AI analysis results
-            </DialogDescription>
-          </DialogContent>
-        </Dialog>
+        <P2bS3JsonViewerDialog 
+          isOpen={!!selectedJson} 
+          onClose={() => setSelectedJson(null)} 
+          jsonContent={selectedJson.content} 
+          aiFileName={selectedJson.aiFileName}
+        />
       )}
 
       <Dialog open={showInvalidFileAlert} onOpenChange={setShowInvalidFileAlert}>

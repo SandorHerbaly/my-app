@@ -1,91 +1,95 @@
 {
-  "[f-001] pdf-text": "Full extracted text goes here",
+  "[f-001] pdf-text": "WESTech\nPART OF ELKO GROUP\nWESTech HU Kft.\nVáci út 91. IV. emelet\nBudapest 1139\nMagyarország\nSzámla\nINV/2024/01441\nSZÁMLA SORSZÁM\nKIBOCSÁTÓ\nWESTech HU Kft.\nBudapest\nVáci út 91. IV. emelet\n1139 Magyarország\nAdószám: 23807341-2-41\nBankszámla: HU20 1040 2166 5052 7066 8453 1004 -\nK&H Bank Zrt.\nForrás:\nS02303 COR2400998\nReferencia:\n4500906379/Szállítólevél: DLZ2401448\nVEVŐ\nVöröskő Kereskedelmi és Szolgáltató Kft.\nVeszprém\nPápai út 36.\n8200 Magyarország\nAdószám: 10233342-2-19\nKözösségi adószám: 10233342-2-19\nSZÁMLA KELTE:\nTELJESÍTÉS DÁTUMA:\nFIZETÉSI FELTÉTEL:\nFIZETÉSI HATÁRIDŐ:\nAdó\n2024-07-22\n2024-07-22\n2024-10-20\nLeírás\n[GTDJICPOS0000021301HU] DJI OM 6 Cikkszám:\nCP.OS.00000213.01 EAN: 6941565939005\n[GTDJICPOS0000028401HU] DJI OM 6 (Platinum Gray)\nCikkszám: CP.OS.00000284.01 EAN: 6941565965387\nMennyiség Egységár Nettó ár Adó összege Bruttó ár\n1,00 47.567,00 47.567 Ft 27% 12.843 Ft 60.410 Ft\n1,00 47.567,00 47.567 Ft 27% 12.843 Ft 60.410 Ft\nAdó\nAdó alapja\nÖsszeg\n27%\n95.134 Ft\n25.686 Ft\nMegjegyzések:\nNettó összeg\nÖsszesen\nFIZETENDŐ ÖSSZEG\n95.134 Ft\n120.820 Ft\n120.820 Ft\nhttps://online.westech.hu | info@westech.hu | +36 30 148 4883\nOldal: 1/2\nWESTech\nPART OF ELKO GROUP\nWESTech HU Kft.\nVáci út 91. IV. emelet\nBudapest 1139\nMagyarország\nhttps://online.westech.hu | info@westech.hu | +36 30 148 4883\nOldal: 2/2",
   "szamla_szam": {
-    "[f-01] szla_prefix": "",
-    "[f-02] szla_year": "",
-    "[f-03] ODU_szamlaszam": "",
-    "[f-00] penznem": "HUF"  
+    "[f-01] szla_prefix": "INV",
+    "[f-02] szla_year": "2024",
+    "[f-03] ODU_szamlaszam": "01441",
+    "[f-00] penznem": "HUF"
   },
   "kibocsato": {
-    "[f-04] cegnev": "",
+    "[f-04] cegnev": "WESTech HU Kft.",
     "cim": {
-      "[f-08] orszag": "",
-      "[f-05] telepules": "",
-      "[f-07] iranyitoszam": "",
-      "[f-06] utca_hsz": ""
+      "[f-08] orszag": "Magyarország",
+      "[f-05] telepules": "Budapest",
+      "[f-07] iranyitoszam": "1139",
+      "[f-06] utca_hsz": "Váci út 91. IV. emelet"
     },
-    "[f-09] adoszam": "",
+    "[f-09] adoszam": "23807341-2-41",
     "bankszamla": {
-      "[f-10] szamlaszam": "",
-      "[f-11] bank": ""
+      "[f-10] szamlaszam": "HU20 1040 2166 5052 7066 8453 1004",
+      "[f-11] bank": "K&H Bank Zrt."
     },
-    "[f-19] ODU_rendeles_szam": "A Forrás alatti két karakterlánc első S betűvel kezdődő része",
-    "[f-20] I6_rendeles_szam": "A Forrás második COR prefixel kezdődő része",
-    "[f-21] I6_szamlaszam": "A referencia alatti azonosító szám"
+    "[f-19] ODU_rendeles_szam": "S02303",
+    "[f-20] I6_rendeles_szam": "COR2400998",
+    "[f-21] I6_szamlaszam": "4500906379"
   },
   "vevo": {
-    "[f-12] cegnev": "",
+    "[f-12] cegnev": "Vöröskő Kereskedelmi és Szolgáltató Kft.",
     "cim": {
-      "[f-16] orszag": "",
-      "[f-13] telepules": "",
-      "[f-15] iranyitoszam": "",
-      "[f-14] utca_hsz": ""
+      "[f-16] orszag": "Magyarország",
+      "[f-13] telepules": "Veszprém",
+      "[f-15] iranyitoszam": "8200",
+      "[f-14] utca_hsz": "Pápai út 36."
     },
-    "[f-17] adoszam": "",
-    "[f-18] kozossegi_adoszam": "Ha a 'Közösségi adószám' szöveg nincs rajta a számlán, akkor a mező értéke null legyen"
+    "[f-17] adoszam": "10233342-2-19",
+    "[f-18] kozossegi_adoszam": "10233342-2-19"
   },
   "datumok": {
-    "[f-22] szamla_kelte": "",
-    "[f-23] teljesites_datuma": "",
-    "[f-24] fizetesi_feltetel": "",
-    "[f-25] fizetesi_hatarido": ""
+    "[f-22] szamla_kelte": "2024-07-22",
+    "[f-23] teljesites_datuma": "2024-07-22",
+    "[f-24] fizetesi_feltetel": null,
+    "[f-25] fizetesi_hatarido": "2024-10-20"
   },
   "tetel": [
     {
       "tetel-sor": 1,
-      "termek-tetel":{
-          "[f-26] I6_cikkszam": "A leírás kapcsos zárójelekkel jelölt része",
-          "[f-27] termek_megnevezes": "A leírás a ']' kapcsos zárójel és a 'Cikkszám:' kifejezés közötti szöveges rész. A leírás sortörést is tartalmaz, azt nem kell figyelembe venni. A termek_megnevezes mezőbe csak a termék nevét kell beilleszteni.",
-          "termek-csoport": "A termék megnevezésből kell meghatározni. Ha a megnevezésben szerepel a DJI szó, akkor a termékcsoport DJI, ha a Roborock szó van a termék megnevezésben, akkor Roborock legyen a termékcsoport neve",
-          "[f-28] Cikkszam": "A 'Cikkszám:' és az 'EAN:' szövegek közötti része a leírásnak",
-          "[f-29] EAN": "A leírásban szereplő 'EAN:' szöveg utáni rész",
-          "[f-31] tetel_mennyiseg": "",
-          "[f-32] tetel_egyseg_ar": "",
-          "[f-33] tetel_netto_ar": "",
-          "[f-34] tetel_ado_mertek": "...%",
-          "[f-35] tetel_ado_osszeg": "",
-          "[f-36] tetel_brutto_ar": ""
+      "termek-tetel": {
+        "[f-26] I6_cikkszam": "GTDJICPOS0000021301HU",
+        "[f-27] termek_megnevezes": "DJI OM 6",
+        "termek-csoport": "DJI",
+        "[f-28] Cikkszam": "CP.OS.00000213.01",
+        "[f-29] EAN": "6941565939005",
+        "[f-31] tetel_mennyiseg": "1,00",
+        "[f-32] tetel_egyseg_ar": "47.567,00",
+        "[f-33] tetel_netto_ar": "47.567",
+        "[f-34] tetel_ado_mertek": "27%",
+        "[f-35] tetel_ado_osszeg": "12.843",
+        "[f-36] tetel_brutto_ar": "60.410"
       }
     },
     {
       "tetel-sor": 2,
-      "szallitasi-dij-tetel":{
-          "[f-30] Kiszállítási díj":"Amennyiben a '[T2] Transport to clients' szöveg van az f-30-as mezőben, akkor azt a Leírásban új tételként kell kezelni, '[T2] Transport to clients' néven.",
-          "[f-31] tetel_mennyiseg": "",
-          "[f-32] tetel_egyseg_ar": "",
-          "[f-33] tetel_netto_ar": "",
-          "[f-34] tetel_ado_mertek": "...%",
-          "[f-35] tetel_ado_osszeg": "",
-          "[f-36] tetel_brutto_ar": ""
+      "termek-tetel": {
+        "[f-26] I6_cikkszam": "GTDJICPOS0000028401HU",
+        "[f-27] termek_megnevezes": "DJI OM 6 (Platinum Gray)",
+        "termek-csoport": "DJI",
+        "[f-28] Cikkszam": "CP.OS.00000284.01",
+        "[f-29] EAN": "6941565965387",
+        "[f-31] tetel_mennyiseg": "1,00",
+        "[f-32] tetel_egyseg_ar": "47.567,00",
+        "[f-33] tetel_netto_ar": "47.567",
+        "[f-34] tetel_ado_mertek": "27%",
+        "[f-35] tetel_ado_osszeg": "12.843",
+        "[f-36] tetel_brutto_ar": "60.410"
       }
     }
   ],
   "ado": {
-    "[f-40] ado_alap": "",
-    "[f-41] ado_osszeg": ""
+    "[f-40] ado_alap": "95.134",
+    "[f-41] ado_osszeg": "25.686"
   },
   "osszegek": {
-    "[f-37] fizetendo_netto_osszeg": "",
-    "[f-38] fizetendo_brutto_osszeg": "",
-    "[f-39] fizetendo_osszeg": ""
+    "[f-37] fizetendo_netto_osszeg": "95.134",
+    "[f-38] fizetendo_brutto_osszeg": "120.820",
+    "[f-39] fizetendo_osszeg": "120.820"
   },
-  "[f-42] szamla_megjegyezesek": "",
+  "[f-42] szamla_megjegyezesek": null,
   "szamla_lablec": {
     "elerhetoseg": {
-      "[f-43] honlap": "",
-      "[f-44] email": "",
-      "[f-45] telefon": ""
+      "[f-43] honlap": "https://online.westech.hu",
+      "[f-44] email": "info@westech.hu",
+      "[f-45] telefon": "+36 30 148 4883"
     }
   },
-  "[f-46] oldal": "A kettőspont utáni string",
+  "[f-46] oldal": "1/2"
 }
