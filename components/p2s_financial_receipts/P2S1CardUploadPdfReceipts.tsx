@@ -14,6 +14,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { h05HandleDeleteUploadedPdfFiles } from '@/lib/invoiceProcessing/h05HandleDeleteUploadedPdfFiles';
+
+
 
 interface UploadCardProps {
   title: string;
@@ -355,125 +358,8 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     setIsDeleteMode(false);
   };
 
-  const handleDelete = async (idsToDelete: string[]) => {
-    const filesToDelete = idsToDelete.reverse(); // Megfordítjuk a tömböt, hogy alulról felfelé töröljünk
-    const deletedFiles: any[] = [];
-    let locationError = false;
 
-    for (const id of filesToDelete) {
-      setDeletingFiles(prev => new Set(prev).add(id));
-      const file = uploadedFiles.find(f => f.id === id);
-      if (file) {
-        const collectionName = getCollectionName(file.type);
-        try {
-          // Törlés a Firestore-ból
-          await deleteDoc(doc(db, collectionName, id));
-          
-          // Törlés a Storage-ból
-          const storageRef = ref(storage, `${collectionName}/${file.name}`);
-          await deleteObject(storageRef);
 
-          deletedFiles.push(file);
-
-          // Számok frissítése
-          setUploadCounts(prev => ({
-            ...prev,
-            [file.type]: prev[file.type] - 1,
-          }));
-
-          // A fájl eltávolítása az uploadedFiles állapotból
-          setUploadedFiles(prev => prev.filter(f => f.id !== id));
-
-          // Kis késleltetés a vizuális hatás érdekében
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (error) {
-          console.error("Error deleting file:", error);
-        }
-      }
-      setDeletingFiles(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
-    }
-
-    // Törlés naplózása
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
-      });
-
-      for (const file of deletedFiles) {
-        await addDoc(collection(db, 'EventLog'), {
-          action: 'delete',
-          fileName: file.name,
-          fileType: file.type,
-          deletedBy: 'Emily Parker',
-          deletedAt: serverTimestamp(),
-          location: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          },
-        });
-      }
-    } catch (error) {
-      console.error("Error getting location:", error);
-      locationError = true;
-
-      // Naplózás hely nélkül
-      for (const file of deletedFiles) {
-        await addDoc(collection(db, 'EventLog'), {
-          action: 'delete',
-          fileName: file.name,
-          fileType: file.type,
-          deletedBy: 'Emily Parker',
-          deletedAt: serverTimestamp(),
-          location: null,
-        });
-      }
-    }
-
-    // Fájllista frissítése
-    await fetchRecentUploads();
-    setSelectedForDelete(new Set());
-    setIsDeleteMode(false);
-
-    // Toast üzenetek megjelenítése
-    if (deletedFiles.length > 0) {
-      toast({
-        title: deletedFiles.length === 1 ? "File Deleted" : "Files Deleted",
-        description: deletedFiles.length === 1
-          ? "The selected file was successfully deleted!"
-          : "The selected files were successfully deleted!",
-      });
-    }
-
-    if (locationError) {
-      toast({
-        title: "Location Error",
-        description: "Unable to record location data for this action.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getAIStatusBadge = (status: string, isSelected: boolean) => {
-    return (
-      <Badge 
-        variant={status === "Analysed" ? "secondary" : status === "Uploading" ? "default" : "outline"}
-        className={cn(
-          isSelected && status !== "Analysed" && "border-red-500 text-red-500"
-        )}
-      >
-        {status}
-      </Badge>
-    );
-  };
-
-  const filterFiles = (files: any[], tab: string) => {
-    if (tab === 'all') return files;
-    return files.filter(file => file.type.toLowerCase().includes(tab.toLowerCase()));
-  };
 
   const getTableTitle = () => {
     if (activeTab === 'all') {
@@ -485,19 +371,54 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
     }
   };
 
-  const getLastUploadForType = (type: string) => {
-    const filteredFiles = filterFiles(uploadedFiles, type);
-    if (filteredFiles.length > 0) {
-      return formatDate(filteredFiles[0].uploadedAt, true);
-    }
-    return 'No uploads for this type';
+
+  const filterFiles = (files: any[], tab: string) => {
+    if (tab === 'all') return files;
+    return files.filter(file => file.type.toLowerCase().includes(tab.toLowerCase()));
   };
 
-  const handleRowClick = (file: any) => {
-    if (!isDeleteMode && file.aiStatus !== 'Uploading') {
-      setSelectedPdf(file.url);
+  const getAIStatusBadge = (status: string, isSelected: boolean) => {
+    if (status === "Analysed") {
+      return (
+        <Badge 
+          variant="outline"
+          className={cn(
+            "w-24 justify-center",
+            isSelected ? "text-red-500 bg-[#F9E3E3] border-none" : "bg-gray-200 text-black"
+          )}
+        >
+          {status}
+        </Badge>
+      );
+    } else if (status === "Not Analysed") {
+      return (
+        <Badge 
+          variant="outline"
+          className={cn(
+            "w-24 justify-center",
+            isSelected ? "text-[#E6A1A1] bg-[#F9E3E3] border-none" : "bg-gray-200 text-[#8A8A8A]"
+          )}
+        >
+          {status}
+        </Badge>
+      );
+    } else if (status === "Uploading") {
+      return (
+        <Badge 
+          variant="default"
+          className="w-24 justify-center"
+        >
+          {status}
+        </Badge>
+      );
     }
   };
+  
+  
+  
+  
+  
+  
 
   return (
     <>
@@ -556,8 +477,30 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
                   Are you sure to delete {selectedForDelete.size} selected {selectedForDelete.size === 1 ? 'file' : 'files'}?
                 </p>
                 <div>
-                  <Button variant="outline" className="mr-2" onClick={handleCancelDelete}>Cancel</Button>
-                  <Button variant="destructive" onClick={() => handleDelete(Array.from(selectedForDelete))}>Delete</Button>
+                  <Button 
+                    variant="outline" 
+                    className="mr-2" 
+                    onClick={handleCancelDelete}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => h05HandleDeleteUploadedPdfFiles(
+                      Array.from(selectedForDelete),
+                      uploadedFiles,
+                      setDeletingFiles,
+                      setUploadCounts,
+                      setUploadedFiles,
+                      fetchRecentUploads,
+                      toast,
+                      setIsDeleteMode,
+                      setSelectedForDelete,
+                      getCollectionName
+                    )}
+                  >
+                    Delete
+                  </Button>
                 </div>
               </>
             )}
@@ -589,8 +532,7 @@ const P2S1CardUploadPdfReceipts: React.FC<P2S1CardUploadPdfReceiptsProps> = ({ o
                     isSelected && "text-red-500",
                     isBeingDeleted && "opacity-50 line-through",
                     isUploading && "bg-blue-50"
-                  )}
-                  onClick={() => handleRowClick(file)}
+                  )}                  
                 >
                   {isDeleteMode && (
                     <TableCell className="text-center">

@@ -430,98 +430,117 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     setIsAnalyseMode(false);
   };
 
-  const handleDelete = async (idsToDelete: string[]) => {
-    const filesToDelete = idsToDelete.reverse();
-    const deletedFiles: any[] = [];
-    let locationError = false;
+const handleDelete = async (idsToDelete: string[]) => {
+  const filesToDelete = idsToDelete.reverse();
+  const deletedFiles: any[] = [];
+  let locationError = false;
 
-    for (const id of filesToDelete) {
-      setDeletingFiles(prev => new Set(prev).add(id));
-      const file = uploadedFiles.find(f => f.id === id);
-      if (file) {
-        const collectionName = getCollectionName(file.type);
+  for (const id of filesToDelete) {
+    setDeletingFiles(prev => new Set(prev).add(id));
+    const file = uploadedFiles.find(f => f.id === id);
+    if (file) {
+      const collectionName = getCollectionName(file.type);
+      try {
+        // Töröljük a PDF fájlt a Firestore-ból és a Storage-ból
+        await deleteDoc(doc(db, collectionName, id));
+        
+        const storageRef = ref(storage, `${collectionName}/${file.name}`);
+        await deleteObject(storageRef);
+
+        deletedFiles.push(file);
+
+        // Ellenőrizzük, hogy van-e hozzá tartozó JSON fájl
+        const jsonFileName = `AI_${file.name.replace('.pdf', '.json')}`;
+        const jsonRef = ref(storage, `AI-Invoices/${jsonFileName}`);
         try {
-          await deleteDoc(doc(db, collectionName, id));
-          
-          const storageRef = ref(storage, `${collectionName}/${file.name}`);
-          await deleteObject(storageRef);
-
-          deletedFiles.push(file);
-
-          setUploadCounts(prev => ({
-            ...prev,
-            [file.type]: prev[file.type] - 1,
-          }));
-
-          setUploadedFiles(prev => prev.filter(f => f.id !== id));
-
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Próbáljuk meg letölteni a JSON fájlt, ha létezik
+          await getDownloadURL(jsonRef);
+          // Ha létezik, töröljük a JSON fájlt is
+          await deleteObject(jsonRef);
+          console.log(`Törölve: ${collectionName}/${file.name}, AI-Invoices/${jsonFileName}`);
         } catch (error) {
-          console.error("Error deleting file:", error);
+          // Ha a fájl nem létezik, nincs teendő
+          console.log(`Törölve: ${collectionName}/${file.name} (nem találtam hozzá tartozó JSON fájlt)`);
         }
-      }
-      setDeletingFiles(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
-    }
 
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
-      });
+        setUploadCounts(prev => ({
+          ...prev,
+          [file.type]: prev[file.type] - 1,
+        }));
 
-      for (const file of deletedFiles) {
-        await addDoc(collection(db, 'EventLog'), {
-          action: 'delete',
-          fileName: file.name,
-          fileType: file.type,
-          deletedBy: 'Emily Parker',
-          deletedAt: serverTimestamp(),
-          location: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          },
-        });
-      }
-    } catch (error) {
-      console.error("Error getting location:", error);
-      locationError = true;
+        setUploadedFiles(prev => prev.filter(f => f.id !== id));
 
-      for (const file of deletedFiles) {
-        await addDoc(collection(db, 'EventLog'), {
-          action: 'delete',
-          fileName: file.name,
-          fileType: file.type,
-          deletedBy: 'Emily Parker',
-          deletedAt: serverTimestamp(),
-          location: null,
-        });
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error("Error deleting file:", error);
       }
     }
+    setDeletingFiles(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
+  }
 
-    await fetchRecentUploads();
-    setSelectedForDelete(new Set());
-    setIsDeleteMode(false);
+  try {
+    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject);
+    });
 
-    if (deletedFiles.length > 0) {
-      toast({
-        title: deletedFiles.length === 1 ? "File Deleted" : "Files Deleted",
-        description: deletedFiles.length === 1
-          ? "The selected file was successfully deleted!"
-          : "The selected files were successfully deleted!",
+    for (const file of deletedFiles) {
+      const jsonFileName = `AI_${file.name.replace('.pdf', '.json')}`;
+      await addDoc(collection(db, 'EventLog'), {
+        action: 'delete',
+        pdfFileName: file.name,
+        jsonFileName: `AI_${file.name.replace('.pdf', '.json')}`,
+        fileType: file.type,
+        deletedBy: 'Emily Parker',
+        deletedAt: serverTimestamp(),
+        location: {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        },
       });
     }
+  } catch (error) {
+    console.error("Error getting location:", error);
+    locationError = true;
 
-    if (locationError) {
-      toast({
-        title: "Location Error",
-        description: "Unable to record location data for this action.",
-        variant: "destructive",
+    for (const file of deletedFiles) {
+      await addDoc(collection(db, 'EventLog'), {
+        action: 'delete',
+        pdfFileName: file.name,
+        jsonFileName: null, // JSON fájl nem létezett vagy nem volt törölve
+        fileType: file.type,
+        deletedBy: 'Emily Parker',
+        deletedAt: serverTimestamp(),
+        location: null,
       });
     }
-  };
+  }
+
+  await fetchRecentUploads();
+  setSelectedForDelete(new Set());
+  setIsDeleteMode(false);
+
+  if (deletedFiles.length > 0) {
+    toast({
+      title: deletedFiles.length === 1 ? "File Deleted" : "Files Deleted",
+      description: deletedFiles.length === 1
+        ? "The selected file was successfully deleted!"
+        : "The selected files were successfully deleted!",
+    });
+  }
+
+  if (locationError) {
+    toast({
+      title: "Location Error",
+      description: "Unable to record location data for this action.",
+      variant: "destructive",
+    });
+  }
+};
+
 
 
   const [isAnalysing, setIsAnalysing] = useState(false);
