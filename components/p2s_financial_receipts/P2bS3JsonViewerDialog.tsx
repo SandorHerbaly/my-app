@@ -61,6 +61,24 @@ const JsonTree: React.FC<JsonTreeProps> = ({ data, level = 0 }) => {
 
 // ... (A többi kód változatlan marad)
 
+const removePdfTextFields = (obj: any): any => {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => removePdfTextFields(item));
+  }
+  
+  const result = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (!key.endsWith('pdf-text')) {
+      result[key] = removePdfTextFields(value);
+    }
+  }
+  return result;
+};
+
 interface P2bS3JsonViewerDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -82,11 +100,17 @@ const P2bS3JsonViewerDialog: React.FC<P2bS3JsonViewerDialogProps> = ({ isOpen, o
   }, [jsonContent]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(jsonContent);
+    if (parsedJson) {
+      const jsonWithoutPdfText = removePdfTextFields(parsedJson);
+      const contentToCopy = JSON.stringify(jsonWithoutPdfText, null, 2);
+      navigator.clipboard.writeText(contentToCopy);
+    } else {
+      navigator.clipboard.writeText(jsonContent);
+    }
     setIsCopied(true);
     toast({ 
       title: "Copied!",
-      description: "JSON content copied to clipboard",
+      description: "JSON content (without pdf-text fields) copied to clipboard",
       duration: 2000,
     });
     setTimeout(() => {
@@ -123,7 +147,7 @@ const P2bS3JsonViewerDialog: React.FC<P2bS3JsonViewerDialogProps> = ({ isOpen, o
                 </TooltipTrigger>
                 {isTooltipVisible && !isCopied && (
                   <TooltipContent>
-                    <p>Copy contents</p>
+                    <p>Copy contents (without pdf-text)</p>
                   </TooltipContent>
                 )}
               </Tooltip>

@@ -1,95 +1,75 @@
 {
-  "[f-001] pdf-text": "WESTech\nPART OF ELKO GROUP\nWESTech HU Kft.\nVáci út 91. IV. emelet\nBudapest 1139\nMagyarország\nSzámla\nINV/2024/01441\nSZÁMLA SORSZÁM\nKIBOCSÁTÓ\nWESTech HU Kft.\nBudapest\nVáci út 91. IV. emelet\n1139 Magyarország\nAdószám: 23807341-2-41\nBankszámla: HU20 1040 2166 5052 7066 8453 1004 -\nK&H Bank Zrt.\nForrás:\nS02303 COR2400998\nReferencia:\n4500906379/Szállítólevél: DLZ2401448\nVEVŐ\nVöröskő Kereskedelmi és Szolgáltató Kft.\nVeszprém\nPápai út 36.\n8200 Magyarország\nAdószám: 10233342-2-19\nKözösségi adószám: 10233342-2-19\nSZÁMLA KELTE:\nTELJESÍTÉS DÁTUMA:\nFIZETÉSI FELTÉTEL:\nFIZETÉSI HATÁRIDŐ:\nAdó\n2024-07-22\n2024-07-22\n2024-10-20\nLeírás\n[GTDJICPOS0000021301HU] DJI OM 6 Cikkszám:\nCP.OS.00000213.01 EAN: 6941565939005\n[GTDJICPOS0000028401HU] DJI OM 6 (Platinum Gray)\nCikkszám: CP.OS.00000284.01 EAN: 6941565965387\nMennyiség Egységár Nettó ár Adó összege Bruttó ár\n1,00 47.567,00 47.567 Ft 27% 12.843 Ft 60.410 Ft\n1,00 47.567,00 47.567 Ft 27% 12.843 Ft 60.410 Ft\nAdó\nAdó alapja\nÖsszeg\n27%\n95.134 Ft\n25.686 Ft\nMegjegyzések:\nNettó összeg\nÖsszesen\nFIZETENDŐ ÖSSZEG\n95.134 Ft\n120.820 Ft\n120.820 Ft\nhttps://online.westech.hu | info@westech.hu | +36 30 148 4883\nOldal: 1/2\nWESTech\nPART OF ELKO GROUP\nWESTech HU Kft.\nVáci út 91. IV. emelet\nBudapest 1139\nMagyarország\nhttps://online.westech.hu | info@westech.hu | +36 30 148 4883\nOldal: 2/2",
-  "szamla_szam": {
-    "[f-01] szla_prefix": "INV",
-    "[f-02] szla_year": "2024",
-    "[f-03] ODU_szamlaszam": "01441",
-    "[f-00] penznem": "HUF"
-  },
-  "kibocsato": {
-    "[f-04] cegnev": "WESTech HU Kft.",
-    "cim": {
-      "[f-08] orszag": "Magyarország",
-      "[f-05] telepules": "Budapest",
-      "[f-07] iranyitoszam": "1139",
-      "[f-06] utca_hsz": "Váci út 91. IV. emelet"
-    },
-    "[f-09] adoszam": "23807341-2-41",
-    "bankszamla": {
-      "[f-10] szamlaszam": "HU20 1040 2166 5052 7066 8453 1004",
-      "[f-11] bank": "K&H Bank Zrt."
-    },
-    "[f-19] ODU_rendeles_szam": "S02303",
-    "[f-20] I6_rendeles_szam": "COR2400998",
-    "[f-21] I6_szamlaszam": "4500906379"
-  },
-  "vevo": {
-    "[f-12] cegnev": "Vöröskő Kereskedelmi és Szolgáltató Kft.",
-    "cim": {
-      "[f-16] orszag": "Magyarország",
-      "[f-13] telepules": "Veszprém",
-      "[f-15] iranyitoszam": "8200",
-      "[f-14] utca_hsz": "Pápai út 36."
-    },
-    "[f-17] adoszam": "10233342-2-19",
-    "[f-18] kozossegi_adoszam": "10233342-2-19"
-  },
-  "datumok": {
-    "[f-22] szamla_kelte": "2024-07-22",
-    "[f-23] teljesites_datuma": "2024-07-22",
-    "[f-24] fizetesi_feltetel": null,
-    "[f-25] fizetesi_hatarido": "2024-10-20"
+  "osszegek": {
+    "[o-29] brutto_osszeg": "957.290",
+    "[o-27] netto_osszeg": "753.772",
+    "[o-28] afa_osszeg": "203.518"
   },
   "tetel": [
     {
       "tetel-sor": 1,
       "termek-tetel": {
-        "[f-26] I6_cikkszam": "GTDJICPOS0000021301HU",
-        "[f-27] termek_megnevezes": "DJI OM 6",
         "termek-csoport": "DJI",
-        "[f-28] Cikkszam": "CP.OS.00000213.01",
-        "[f-29] EAN": "6941565939005",
-        "[f-31] tetel_mennyiseg": "1,00",
-        "[f-32] tetel_egyseg_ar": "47.567,00",
-        "[f-33] tetel_netto_ar": "47.567",
-        "[f-34] tetel_ado_mertek": "27%",
-        "[f-35] tetel_ado_osszeg": "12.843",
-        "[f-36] tetel_brutto_ar": "60.410"
+        "[o-23] tetel_mennyiseg": "2,00",
+        "[o-20] termek_megnevezes": "DJI Avata 2 Fly More\nCombo (Three Batteries) Cikkszám:",
+        "[o-25] tetel_ado_mertek": "27%",
+        "[o-19] I6_cikkszam": "[GTDJICPFP0000015101HU]",
+        "[o-22] EAN": "6941565980120",
+        "[o-26] tetel_amount": "753.772",
+        "[o-24] tetel_egysegar": "376.886,00",
+        "[o-21] Cikkszam": "CP.FP.00000151.01"
       }
     },
     {
       "tetel-sor": 2,
       "termek-tetel": {
-        "[f-26] I6_cikkszam": "GTDJICPOS0000028401HU",
-        "[f-27] termek_megnevezes": "DJI OM 6 (Platinum Gray)",
-        "termek-csoport": "DJI",
-        "[f-28] Cikkszam": "CP.OS.00000284.01",
-        "[f-29] EAN": "6941565965387",
-        "[f-31] tetel_mennyiseg": "1,00",
-        "[f-32] tetel_egyseg_ar": "47.567,00",
-        "[f-33] tetel_netto_ar": "47.567",
-        "[f-34] tetel_ado_mertek": "27%",
-        "[f-35] tetel_ado_osszeg": "12.843",
-        "[f-36] tetel_brutto_ar": "60.410"
+        "[o-20] termek_megnevezes": "Transport to clients",
+        "[o-23] tetel_mennyiseg": "1,00",
+        "[o-26] tetel_amount": "0",
+        "[o-24] tetel_egysegar": "0,00",
+        "[o-21] Cikkszam": null,
+        "[o-25] tetel_ado_mertek": "27%",
+        "[o-19] I6_cikkszam": "[T2]",
+        "[o-22] EAN": null,
+        "termek-csoport": null
       }
     }
   ],
-  "ado": {
-    "[f-40] ado_alap": "95.134",
-    "[f-41] ado_osszeg": "25.686"
-  },
-  "osszegek": {
-    "[f-37] fizetendo_netto_osszeg": "95.134",
-    "[f-38] fizetendo_brutto_osszeg": "120.820",
-    "[f-39] fizetendo_osszeg": "120.820"
-  },
-  "[f-42] szamla_megjegyezesek": null,
-  "szamla_lablec": {
-    "elerhetoseg": {
-      "[f-43] honlap": "https://online.westech.hu",
-      "[f-44] email": "info@westech.hu",
-      "[f-45] telefon": "+36 30 148 4883"
+  "vevo": {
+    "[o-18] telefon": null,
+    "[o-09] cegnev": "ONLINEFOTO Kft.",
+    "szallitasi_cim": {
+      "[o-17] orszag": null,
+      "[o-15] telepules": null,
+      "[o-14] utca_hsz": null,
+      "[o-16] iranyitoszam": null
+    },
+    "szamlazasi_cim": {
+      "[o-11] telepules": "Budapest",
+      "[o-10] utca_hsz": "Ady Endre út 28-30. fszt. 2.",
+      "[o-13] orszag": "Magyarország",
+      "[o-12] iranyitoszam": "1191"
     }
   },
-  "[f-46] oldal": "1/2"
+  "[o-30] fizetesi_feltetelek": null,
+  "kibocsato": {
+    "cim": {
+      "[o-05] utca_hsz": "Váci út 91. IV. emelet",
+      "[o-08] orszag": "Magyarország",
+      "[o-07] iranyitoszam": "1139",
+      "[o-06] telepules": "Budapest"
+    },
+    "[o-04] cegnev": "WESTech HU Kft."
+  },
+  "szamla_lablec": {
+    "elerhetoseg": {
+      "[o-33] telefon": "+36 30 148 4883",
+      "[o-32] email": "info@westech.hu",
+      "[o-31] honlap": "https://online.westech.hu"
+    }
+  },
+  "rendeles": {
+    "[o-02] rendeles_datum": null,
+    "[o-03] ertekesito": null,
+    "[o-01] rendeles_szam": null
+  }
 }

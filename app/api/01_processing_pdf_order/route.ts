@@ -5,7 +5,7 @@ import { getStorage } from 'firebase-admin/storage';
 import fs from 'fs';
 import path from 'path';
 
-console.log('Starting analyze-invoice route');
+console.log('Starting analyze-order route');
 
 if (!admin.apps.length) {
   console.log('Initializing Firebase Admin');
@@ -39,29 +39,12 @@ console.log('Initializing Gemini model');
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 export async function POST(req: NextRequest) {
-  console.log('Received analyze-invoice POST request');
+  console.log('Received analyze-order POST request');
   try {
     const { pdf_filename, type } = await req.json();
     console.log(`Processing file: ${pdf_filename} of type: ${type}`);
 
-    // Dinamikusan állítsuk be a gyűjtemény nevét a típus alapján
-    let collectionName = '';
-    switch (type) {
-      case 'Invoices':
-        collectionName = 'UploadedPdfInvoices';
-        break;
-      case 'Orders':
-        collectionName = 'UploadedPdfOrders';
-        break;
-      case 'WSK Invoices':
-        collectionName = 'UploadedWskInvoices';
-        break;
-      case 'Bank Statements':
-        collectionName = 'UploadedBankStatements';
-        break;
-      default:
-        throw new Error('Unknown file type');
-    }
+    const collectionName = 'UploadedPdfOrders';
 
     const file = storage.file(`${collectionName}/${pdf_filename}`);
     const [exists] = await file.exists();
@@ -173,9 +156,6 @@ export async function POST(req: NextRequest) {
           Note: The 'tetel' array should contain all product items found in the order. Repeat the 'termek-tetel' structure for each item, incrementing the 'tetel-sor' number.
         `
       }
-      
-      
-      
     ]);
 
     console.log('Received response from Gemini');
@@ -194,7 +174,7 @@ export async function POST(req: NextRequest) {
       console.log('Gemini elemzés eredménye:', JSON.stringify(parsedJson, null, 2));
 
       const ai_json_filename = `AI_${pdf_filename.replace('.pdf', '.json')}`;
-      const docRef = firestore.collection('AI-Invoices').doc(ai_json_filename);
+      const docRef = firestore.collection('AI-Analyses').doc(ai_json_filename);
       await docRef.set(parsedJson);
       console.log(`AI elemzés eredménye elmentve: ${ai_json_filename}`);
 
@@ -203,7 +183,7 @@ export async function POST(req: NextRequest) {
         action: 'analyse document',
         fileName: pdf_filename,
         aiFileName: ai_json_filename,
-        collection: 'AI-Invoices',
+        collection: 'AI-Analyses',
         analysedBy: 'Emily Parker',
         analysedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -215,12 +195,11 @@ export async function POST(req: NextRequest) {
         eventLogId: eventLogRef.id
       });
     } catch (error) {
-      console.error('Error processing invoice:', error.message);
-      return NextResponse.json({ error: 'Failed to analyze invoice', details: error.message }, { status: 500 });
+      console.error('Error processing order:', error.message);
+      return NextResponse.json({ error: 'Failed to analyze order', details: error.message }, { status: 500 });
     }
   } catch (error) {
-    console.error('Error processing invoice:', error.message);
-    return NextResponse.json({ error: 'Failed to analyze invoice', details: error.message }, { status: 500 });
+    console.error('Error processing order:', error.message);
+    return NextResponse.json({ error: 'Failed to analyze order', details: error.message }, { status: 500 });
   }
 }
-
