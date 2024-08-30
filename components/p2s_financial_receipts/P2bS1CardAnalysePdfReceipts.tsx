@@ -518,17 +518,78 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     // ... (a függvény többi része változatlan marad)
   };
 
-
-
   const [isAnalysing, setIsAnalysing] = useState(false);
+
+  const sendPdfToAnalyseEndpoint = async (file: any, endpoint: string) => {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pdf_filename: file.name,
+          type: file.type,
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server error details:', errorData);
+        throw new Error(`Processing failed with status: ${response.status}. Details: ${JSON.stringify(errorData)}`);
+      }
+  
+      return response;
+    } catch (error) {
+      console.error('Error sending PDF to analyse endpoint:', error);
+      throw error;
+    }
+  };
+
+
 
   const handleAnalyse = async (idsToAnalyse: string[]) => {
     setIsAnalysing(true);
+    
     for (const id of idsToAnalyse) {
       const file = uploadedFiles.find(f => f.id === id);
       if (file) {
         try {
-          await analysePdf(file);
+          const endpoint = getApiEndpoint(file.type);  // Itt kaphatod meg a megfelelő API végpontot a fájl típusától függően
+          console.log(`${file.type} típusú ${file.name} elemzésének megkezdése.`);
+          
+          const response = await sendPdfToAnalyseEndpoint(file, endpoint);
+          
+          if (!response.ok) {
+            console.error(`Error analysing file: ${file.name}`);
+            toast({
+              title: "Analysis Error",
+              description: `Failed to analyse ${file.name}. Please try again.`,
+              variant: "destructive",
+            });
+          } else {
+            console.log(`${file.type} típusú ${file.name} elemzése sikeresen befejeződött.`);
+            toast({
+              title: "Analysis Complete",
+              description: `${file.name} successfully analysed.`,
+            });
+
+            // copy start - Frissítsd az uploadedFiles állapotot és az adatbázist
+            setUploadedFiles(prevFiles => prevFiles.map(f => 
+              f.id === file.id ? 
+              { ...f, aiStatus: 'Analysed', aiFiles: 'json,pdf' } : 
+              f
+          ));
+
+          // Firestore frissítés
+          const docRef = doc(db, getCollectionName(file.type), file.id);
+          await updateDoc(docRef, {
+              aiStatus: 'Analysed',
+              aiFiles: 'json,pdf'
+          });
+          // copy end - állapot és adatbázis frissítése vége
+
+          }
         } catch (error) {
           console.error("Error analysing file:", error);
           toast({
@@ -539,6 +600,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
         }
       }
     }
+  
     setSelectedForAnalyse(new Set());
     setIsAnalyseMode(false);
     setIsAnalysing(false);
@@ -546,83 +608,29 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
       title: "Analysis Complete",
       description: "Selected files have been analysed successfully.",
     });
+    
     await fetchRecentUploads();
   };
-
-
-
-  const analysePdf = async (file: any) => {
-    console.log(`Kezdődik a(z) ${file.name} elemzése...`);
-    try {
-        // Fetching the correct collection based on file type
-        const collectionName = getCollectionName(file.type);
-
-        const response = await fetch('/api/analyze-invoice', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                pdf_filename: file.name,
-                type: file.type
-            }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Server error details:', errorData);
-            throw new Error(`Processing failed with status: ${response.status}. Details: ${JSON.stringify(errorData)}`);
-        }
-
-        const result = await response.json();
-        console.log('Gemini elemzés eredménye:', result);
-
-        const aiFileName = result.ai_json_filename;
-        
-        // Update the document in the correct collection
-        await updateDoc(doc(db, collectionName, file.id), {
-            aiStatus: 'Analysed',
-            aiFiles: 'json,pdf',
-            analysedAt: serverTimestamp(),
-            aiResult: result.text,
-            aiFileName: aiFileName,
-        });
-
-        const eventLogRef = await addDoc(collection(db, 'EventLog'), {
-            action: 'analyse document',
-            fileName: file.name,
-            aiFileName: aiFileName,
-            fileType: file.type,
-            collection: collectionName,
-            analysedBy: 'Emily Parker',
-            analysedAt: serverTimestamp(),
-            location: await getCurrentLocation(),
-        });
-
-        console.log(`A(z) ${file.name} elemzése befejeződött. Az ${aiFileName} eredményfájl elmentve a Firestore ${collectionName} kollekcióba.`);
-        console.log(`A(z) ${file.name} elemzésről logfile készült az EventLog gyűjteményben az alábbi néven: ${eventLogRef.id}`);
-
-        setUploadedFiles(prev => prev.map(f => 
-            f.id === file.id ? {
-                ...f,
-                aiStatus: 'Analysed',
-                aiFiles: 'json,pdf',
-                analysedAt: new Date(),
-                aiResult: result.text,
-                aiFileName
-            } : f
-        ));
-
-        setAnalysedCounts(prev => ({
-            ...prev,
-            [file.type]: prev[file.type] + 1,
-        }));
-
-    } catch (error) {
-        console.error('Részletes hiba:', error);
-        throw error;
+  
+  const getApiEndpoint = (type: string): string => {
+    switch (type) {
+      case 'Orders':
+        return '/api/01_processing_pdf_order';
+      case 'Invoices':
+        return '/api/02_processing_pdf_invoice';
+      case 'WSK Invoices':
+        return '/api/03_processing_pdf_wsk_invoice';
+      case 'Bank Statements':
+        return '/api/04_processing_pdf_bank_statement';
+      default:
+        throw new Error('Unknown file type');
     }
-};
+  };
+  
+
+
+
+
 
 
   const getCurrentLocation = async (): Promise<{ latitude: number; longitude: number } | null> => {
@@ -649,59 +657,60 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
   const handleJsonClick = async (file: any) => {
     console.log('JSON ikon kattintás:', file);
     if (file.aiStatus === 'Analysed') {
-      console.log('File elemzett állapotban van');
-      try {
-        let content;
-        if (file.aiResult) {
-          console.log('aiResult megtalálható:', file.aiResult);
-          content = typeof file.aiResult === 'string' ? JSON.parse(file.aiResult) : file.aiResult;
-        } else {
-          console.log('aiResult hiányzik, megpróbáljuk lekérni a Firestore-ból');
-          const collectionName = getCollectionName(file.type);
-          const docRef = doc(db, collectionName, file.id);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            content = docSnap.data().aiResult;
-            console.log('Firestore-ból lekért aiResult:', content);
+        console.log('File elemzett állapotban van');
+        try {
+            let content;
+            if (file.aiResult) {
+                console.log('aiResult megtalálható:', file.aiResult);
+                content = typeof file.aiResult === 'string' ? JSON.parse(file.aiResult) : file.aiResult;
+            } else {
+                console.log('aiResult hiányzik, megpróbáljuk lekérni a Firestore-ból');
+                const collectionName = getCollectionName(file.type);
+                const docRef = doc(db, collectionName, file.id);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    content = docSnap.data().aiResult;
+                    console.log('Firestore-ból lekért aiResult:', content);
+                    
+                    // Frissítsük a lokális state-et is
+                    setUploadedFiles(prev => prev.map(f => 
+                        f.id === file.id ? { ...f, aiResult: content } : f
+                    ));
+                } else {
+                    throw new Error('Nem található aiResult a dokumentumhoz');
+                }
+            }
+
+            if (!content) {
+                throw new Error('Üres aiResult');
+            }
+
+            // Győződj meg róla, hogy a content biztosan objektum
+            const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+            console.log('Parsed aiResult:', parsedContent);
             
-            // Frissítsük a lokális state-et is
-            setUploadedFiles(prev => prev.map(f => 
-              f.id === file.id ? { ...f, aiResult: content } : f
-            ));
-          } else {
-            throw new Error('Nem található aiResult a dokumentumhoz');
-          }
+            setSelectedJson({
+                content: JSON.stringify(parsedContent, null, 2),
+                aiFileName: file.aiFileName || `AI_${file.name.replace('.pdf', '.json')}`
+            });
+        } catch (error) {
+            console.error('Hiba a JSON adatok kezelése során:', error);
+            toast({
+                title: "JSON Error",
+                description: "Hiba történt a JSON adatok betöltése során.",
+                variant: "destructive",
+            });
         }
-  
-        if (!content) {
-          throw new Error('Üres aiResult');
-        }
-  
-        // Győződjünk meg róla, hogy a content biztosan objektum
-        const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
-        console.log('Parsed aiResult:', parsedContent);
-        
-        setSelectedJson({
-          content: JSON.stringify(parsedContent, null, 2),
-          aiFileName: file.aiFileName || `AI_${file.name.replace('.pdf', '.json')}`
-        });
-      } catch (error) {
-        console.error('Hiba a JSON adatok kezelése során:', error);
-        toast({
-          title: "JSON Error",
-          description: "Hiba történt a JSON adatok betöltése során.",
-          variant: "destructive",
-        });
-      }
     } else {
-      console.log('File nincs elemezve:', file.aiStatus);
-      toast({
-        title: "Not Analysed",
-        description: "Ez a fájl még nincs elemezve.",
-        variant: "warning",
-      });
+        console.log('File nincs elemezve:', file.aiStatus);
+        toast({
+            title: "Not Analysed",
+            description: "Ez a fájl még nincs elemezve.",
+            variant: "warning",
+        });
     }
-  };
+};
+
 
 
   const getTableTitle = () => {
@@ -751,6 +760,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     event.stopPropagation(); // Ezzel megelőzöd, hogy a sorra kattintás eseménye is lefusson
     setSelectedPdf(file.url); // Mindig megnyitja a PDF-et, függetlenül az elemzési státusztól
   };
+  
   
 
   return (
@@ -904,32 +914,33 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                 <TableCell>{file.type}</TableCell>
                 <TableCell>{getAIStatusBadge(file.aiStatus, isSelectedForAnalyse)}</TableCell>
                 <TableCell className="text-center">
-                  {file.aiFiles === 'json,pdf' ? (
-                    <div className="flex items-center justify-center space-x-4">
-                      <div 
-                        className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors" // cursor-pointer itt
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedPdf(file.url);
-                        }}
-                      >
-                        <BsFiletypePdf className="text-gray-500 w-5 h-5" />
-                      </div>
-                      <div className="h-4 w-px bg-gray-300"></div>
-                      <div 
-                        className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors" // cursor-pointer itt
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleJsonClick(file);
-                        }}
-                      >
-                        <BsFiletypeJson className="text-gray-500 w-5 h-5" />
-                      </div>
-                    </div>
-                  ) : (
-                    '-'
-                  )}
+                    {file.aiFiles === 'json,pdf' ? (
+                        <div className="flex items-center justify-center space-x-4">
+                            <div 
+                                className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors" 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedPdf(file.url);
+                                }}
+                            >
+                                <BsFiletypePdf className="text-gray-500 w-5 h-5" />
+                            </div>
+                            <div className="h-4 w-px bg-gray-300"></div>
+                            <div 
+                                className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors" 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleJsonClick(file);
+                                }}
+                            >
+                                <BsFiletypeJson className="text-gray-500 w-5 h-5" />
+                            </div>
+                        </div>
+                    ) : (
+                        '-'
+                    )}
                 </TableCell>
+
                 <TableCell>{isUploading ? 'Uploading...' : formatDate(file.analysedAt || file.uploadedAt, true)}</TableCell>
               </TableRow>
 
