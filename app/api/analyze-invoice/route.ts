@@ -101,106 +101,81 @@ export async function POST(req: NextRequest) {
           mimeType: mimeType
         }
       },
-      { 
+      {
         text: `
-          Extract the full text content from the provided invoice document. 
+          Extract the full text content from the provided order document. 
           Then, fill the following JSON template with the extracted data:
-
+      
           {
-            "[f-001] pdf-text": "Full extracted text goes here",
-            "szamla_szam": {
-              "[f-01] szla_prefix": "",
-              "[f-02] szla_year": "",
-              "[f-03] ODU_szamlaszam": "",
-              "[f-00] penznem": "HUF"  
+            "[o-001] pdf-text": "Full extracted text goes here",
+            "rendeles": {
+              "[o-01] rendeles_szam": "A 'Rendelés #' utáni karakterlánc",
+              "[o-02] rendeles_datum": "A 'Rendelés dátuma:' melletti dátum",
+              "[o-03] ertekesito": "Az 'Értékesítő:' melletti név"
             },
             "kibocsato": {
-              "[f-04] cegnev": "",
+              "[o-04] cegnev": "",
               "cim": {
-                "[f-08] orszag": "",
-                "[f-05] telepules": "",
-                "[f-07] iranyitoszam": "",
-                "[f-06] utca_hsz": ""
-              },
-              "[f-09] adoszam": "",
-              "bankszamla": {
-                "[f-10] szamlaszam": "",
-                "[f-11] bank": ""
-              },
-              "[f-19] ODU_rendeles_szam": "A Forrás alatti két karakterlánc első S betűvel kezdődő része",
-              "[f-20] I6_rendeles_szam": "A Forrás második COR prefixel kezdődő része",
-              "[f-21] I6_szamlaszam": "A referencia alatti azonosító szám"
+                "[o-05] utca_hsz": "",
+                "[o-06] telepules": "",
+                "[o-07] iranyitoszam": "",
+                "[o-08] orszag": ""
+              }
             },
             "vevo": {
-              "[f-12] cegnev": "",
-              "cim": {
-                "[f-16] orszag": "",
-                "[f-13] telepules": "",
-                "[f-15] iranyitoszam": "",
-                "[f-14] utca_hsz": ""
+              "[o-09] cegnev": "",
+              "szamlazasi_cim": {
+                "[o-10] utca_hsz": "",
+                "[o-11] telepules": "",
+                "[o-12] iranyitoszam": "",
+                "[o-13] orszag": ""
               },
-              "[f-17] adoszam": "",
-              "[f-18] kozossegi_adoszam": "Ha a 'Közösségi adószám' szöveg nincs rajta a számlán, akkor a mező értéke null legyen"
-            },
-            "datumok": {
-              "[f-22] szamla_kelte": "",
-              "[f-23] teljesites_datuma": "",
-              "[f-24] fizetesi_feltetel": "",
-              "[f-25] fizetesi_hatarido": ""
+              "szallitasi_cim": {
+                "[o-14] utca_hsz": "",
+                "[o-15] telepules": "",
+                "[o-16] iranyitoszam": "",
+                "[o-17] orszag": ""
+              },
+              "[o-18] telefon": ""
             },
             "tetel": [
               {
                 "tetel-sor": 1,
-                "termek-tetel":{
-                    "[f-26] I6_cikkszam": "A leírás kapcsos zárójelekkel jelölt része",
-                    "[f-27] termek_megnevezes": "A leírás a ']' kapcsos zárójel és a 'Cikkszám:' kifejezés közötti szöveges rész. A leírás sortörést is tartalmaz, azt nem kell figyelembe venni. A termek_megnevezes mezőbe csak a termék nevét kell beilleszteni.",
-                    "termek-csoport": "A termék megnevezésből kell meghatározni. Ha a megnevezésben szerepel a DJI szó, akkor a termékcsoport DJI, ha a Roborock szó van a termék megnevezésben, akkor Roborock legyen a termékcsoport neve",
-                    "[f-28] Cikkszam": "A 'Cikkszám:' és az 'EAN:' szövegek közötti része a leírásnak",
-                    "[f-29] EAN": "A leírásban szereplő 'EAN:' szöveg utáni rész",
-                    "[f-31] tetel_mennyiseg": "",
-                    "[f-32] tetel_egyseg_ar": "",
-                    "[f-33] tetel_netto_ar": "",
-                    "[f-34] tetel_ado_mertek": "...%",
-                    "[f-35] tetel_ado_osszeg": "",
-                    "[f-36] tetel_brutto_ar": ""
-                }
-              },
-              {
-                "tetel-sor": 2,
-                "szallitasi-dij-tetel":{
-                    "[f-30] Kiszállítási díj":"Amennyiben a '[T2] Transport to clients' szöveg van az f-30-as mezőben, akkor azt a Leírásban új tételként kell kezelni, '[T2] Transport to clients' néven.",
-                    "[f-31] tetel_mennyiseg": "",
-                    "[f-32] tetel_egyseg_ar": "",
-                    "[f-33] tetel_netto_ar": "",
-                    "[f-34] tetel_ado_mertek": "...%",
-                    "[f-35] tetel_ado_osszeg": "",
-                    "[f-36] tetel_brutto_ar": ""
+                "termek-tetel": {
+                  "[o-19] I6_cikkszam": "A leírás kapcsos zárójelekkel jelölt része",
+                  "[o-20] termek_megnevezes": "A leírás a ']' kapcsos zárójel utáni szöveges rész",
+                  "termek-csoport": "A termék megnevezésből kell meghatározni. Ha a megnevezésben szerepel a DJI szó, akkor a termékcsoport DJI, ha a Roborock szó van a termék megnevezésben, akkor Roborock legyen a termékcsoport neve",
+                  "[o-21] Cikkszam": "A 'Cikkszám:' utáni karakterlánc",
+                  "[o-22] EAN": "Az 'EAN:' utáni számsor",
+                  "[o-23] tetel_mennyiseg": "",
+                  "[o-24] tetel_egysegar": "",
+                  "[o-25] tetel_ado_mertek": "...%",
+                  "[o-26] tetel_amount": ""
                 }
               }
             ],
-            "ado": {
-              "[f-40] ado_alap": "",
-              "[f-41] ado_osszeg": ""
-            },
             "osszegek": {
-              "[f-37] fizetendo_netto_osszeg": "",
-              "[f-38] fizetendo_brutto_osszeg": "",
-              "[f-39] fizetendo_osszeg": ""
+              "[o-27] netto_osszeg": "",
+              "[o-28] afa_osszeg": "",
+              "[o-29] brutto_osszeg": ""
             },
-            "[f-42] szamla_megjegyezesek": "",
+            "[o-30] fizetesi_feltetelek": "A 'Payment terms:' utáni szöveg",
             "szamla_lablec": {
               "elerhetoseg": {
-                "[f-43] honlap": "",
-                "[f-44] email": "",
-                "[f-45] telefon": ""
+                "[o-31] honlap": "",
+                "[o-32] email": "",
+                "[o-33] telefon": ""
               }
-            },
-            "[f-46] oldal": "A kettőspont utáni string",
+            }
           }
-
-          Return the filled JSON template with the extracted data from the provided invoice.
+      
+          Return the filled JSON template with the extracted data from the provided order document.
+          Note: The 'tetel' array should contain all product items found in the order. Repeat the 'termek-tetel' structure for each item, incrementing the 'tetel-sor' number.
         `
       }
+      
+      
+      
     ]);
 
     console.log('Received response from Gemini');

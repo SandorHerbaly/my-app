@@ -747,6 +747,12 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     );
   };
 
+  const handleFilenameClick = (file: any, event: React.MouseEvent) => {
+    event.stopPropagation(); // Ezzel megelőzöd, hogy a sorra kattintás eseménye is lefusson
+    setSelectedPdf(file.url); // Mindig megnyitja a PDF-et, függetlenül az elemzési státusztól
+  };
+  
+
   return (
     <>
       <h2 className="text-3xl font-bold mb-6">Analyse Financial Receipts</h2>
@@ -866,13 +872,12 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
               <TableRow 
                 key={file.id || file.name}
                 className={cn(
-                  "cursor-pointer hover:bg-blue-50 transition-colors",
+                  "hover:bg-blue-50 transition-colors", // Eltávolítva a cursor-pointer a teljes sorra
                   isSelectedForDelete && "text-red-500",
                   isSelectedForAnalyse && "text-blue-500",
                   isBeingDeleted && "opacity-50 line-through",
                   isUploading && "bg-blue-50"
                 )}
-                onClick={() => handleRowClick(file)}
               >
                 {(isDeleteMode || isAnalyseMode) && (
                   <TableCell className="text-center">
@@ -889,15 +894,20 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                   </TableCell>
                 )}
                 <TableCell>
-                  <span className="hover:underline">{file.name}</span>
+                  <span 
+                    className="hover:underline cursor-pointer" // cursor-pointer csak itt
+                    onClick={(event) => handleFilenameClick(file, event)} 
+                  >
+                    {file.name}
+                  </span>
                 </TableCell>
                 <TableCell>{file.type}</TableCell>
                 <TableCell>{getAIStatusBadge(file.aiStatus, isSelectedForAnalyse)}</TableCell>
-                <TableCell>
+                <TableCell className="text-center">
                   {file.aiFiles === 'json,pdf' ? (
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-center space-x-4">
                       <div 
-                        className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors"
+                        className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors" // cursor-pointer itt
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedPdf(file.url);
@@ -907,10 +917,9 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                       </div>
                       <div className="h-4 w-px bg-gray-300"></div>
                       <div 
-                        className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors"
+                        className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors" // cursor-pointer itt
                         onClick={(e) => {
                           e.stopPropagation();
-                          console.log('JSON ikon kattintás esemény');
                           handleJsonClick(file);
                         }}
                       >
@@ -923,6 +932,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                 </TableCell>
                 <TableCell>{isUploading ? 'Uploading...' : formatDate(file.analysedAt || file.uploadedAt, true)}</TableCell>
               </TableRow>
+
             );
           })}
         </TableBody>
