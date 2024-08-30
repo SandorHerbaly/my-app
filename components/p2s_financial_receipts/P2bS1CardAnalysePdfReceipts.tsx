@@ -736,17 +736,35 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
     return files.filter(file => file.type.toLowerCase().includes(tab.toLowerCase()));
   };
 
-  const getAIStatusBadge = (status: string, isSelected: boolean) => {
+  const getAIStatusBadge = (status: string, isSelected: boolean, isSelectedForDelete: boolean, isSelectedForAnalyse: boolean) => {
+    const isAnalysed = status === "Analysed";
+  
+    const badgeColorClass = isAnalysed
+      ? isSelectedForDelete 
+        ? "bg-[#F9E3E3] text-red-500" // Piros háttér és szöveg, ha törlésre ki van választva
+        : isSelectedForAnalyse
+          ? "bg-[#DAE5FB] text-blue-500" // Halványkék háttér és kék szöveg, ha analizálásra ki van választva
+          : "bg-[#EDF1F8] text-black" // Halványszürke háttér és fekete szöveg, ha nincs kijelölve
+      : isSelectedForDelete
+        ? "border-red-500 text-red-500" // Piros keret és szöveg, ha törlésre ki van választva
+        : isSelectedForAnalyse
+          ? "border-blue-500 text-blue-500" // Kék keret és szöveg, ha analizálásra ki van választva
+          : "border-gray-300 text-black"; // Halványszürke keret és fekete szöveg, ha nincs kijelölve
+  
     return (
       <Badge 
-        variant={status === "Analysed" ? "secondary" : status === "Uploading" ? "default" : "outline"}
-        className={cn(
-          isSelected && status !== "Analysed" && "border-blue-500 text-blue-500"
-        )}
+        variant={isAnalysed ? "secondary" : "outline"}
+        className={cn(badgeColorClass, "px-2 py-1 rounded")}
       >
-        {status === "Analysed" && (
+        {isAnalysed && (
           <img 
-            src="/Gemini_logo.png" 
+            src={
+              isSelectedForDelete 
+                ? "/Gemini_logo_red.png" 
+                : isSelectedForAnalyse 
+                  ? "/Gemini_logo_blue.png" 
+                  : "/Gemini_logo.png"
+            } // Piros logó, ha törlésre ki van választva, kék logó, ha analizálásra ki van választva, egyébként fekete logó
             alt="Gemini Logo" 
             className="gemini-logo-small mr-1"
           />
@@ -755,6 +773,7 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
       </Badge>
     );
   };
+  
 
   const handleFilenameClick = (file: any, event: React.MouseEvent) => {
     event.stopPropagation(); // Ezzel megelőzöd, hogy a sorra kattintás eseménye is lefusson
@@ -912,41 +931,48 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                   </span>
                 </TableCell>
                 <TableCell>{file.type}</TableCell>
-                <TableCell>{getAIStatusBadge(file.aiStatus, isSelectedForAnalyse)}</TableCell>
+                <TableCell>{getAIStatusBadge(file.aiStatus, isSelectedForAnalyse, isSelectedForDelete, isSelectedForAnalyse)}</TableCell>
                 <TableCell className="text-center">
-                    {file.aiFiles === 'json,pdf' ? (
-                        <div className="flex items-center justify-center space-x-4">
-                            <div 
-                                className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors" 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedPdf(file.url);
-                                }}
-                            >
-                                <BsFiletypePdf className="text-gray-500 w-5 h-5" />
-                            </div>
-                            <div className="h-4 w-px bg-gray-300"></div>
-                            <div 
-                                className="p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors" 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleJsonClick(file);
-                                }}
-                            >
-                                <BsFiletypeJson className="text-gray-500 w-5 h-5" />
-                            </div>
-                        </div>
-                    ) : (
-                        '-'
-                    )}
+                  {file.aiFiles === 'json,pdf' ? (
+                    <div className="flex items-center justify-center space-x-4">
+                      <div 
+                        className={cn(
+                          "p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors",
+                          isSelectedForDelete && "text-red-500",
+                          isSelectedForAnalyse && "text-blue-500"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPdf(file.url);
+                        }}
+                      >
+                        <BsFiletypePdf className={cn("w-5 h-5", isSelectedForDelete && "text-red-500", isSelectedForAnalyse && "text-blue-500")} />
+                      </div>
+                      <div className="h-4 w-px bg-gray-300"></div>
+                      <div 
+                        className={cn(
+                          "p-1 rounded-sm hover:bg-[#AFC4DF] cursor-pointer transition-colors",
+                          isSelectedForDelete && "text-red-500",
+                          isSelectedForAnalyse && "text-blue-500"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJsonClick(file);
+                        }}
+                      >
+                        <BsFiletypeJson className={cn("w-5 h-5", isSelectedForDelete && "text-red-500", isSelectedForAnalyse && "text-blue-500")} />
+                      </div>
+                    </div>
+                  ) : (
+                    '-'
+                  )}
                 </TableCell>
-
                 <TableCell>{isUploading ? 'Uploading...' : formatDate(file.analysedAt || file.uploadedAt, true)}</TableCell>
               </TableRow>
-
             );
           })}
         </TableBody>
+
       </Table>
       </div>
       
