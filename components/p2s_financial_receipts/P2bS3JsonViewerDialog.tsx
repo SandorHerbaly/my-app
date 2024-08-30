@@ -18,9 +18,13 @@ const JsonTree: React.FC<JsonTreeProps> = ({ data, level = 0 }) => {
     return <span className="text-green-600">{JSON.stringify(data)}</span>;
   }
 
+  const entries = Object.entries(data);
+  const pdfTextEntries = entries.filter(([key]) => key.endsWith('pdf-text'));
+  const otherEntries = entries.filter(([key]) => !key.endsWith('pdf-text'));
+
   return (
     <div style={{ paddingLeft: level > 0 ? '1.5rem' : '0' }}>
-      {Object.entries(data).map(([key, value]) => {
+      {otherEntries.map(([key, value]) => {
         if (key.startsWith('f-') && key !== 'f-00') return null;
         const isObject = typeof value === 'object' && value !== null;
         return (
@@ -39,9 +43,23 @@ const JsonTree: React.FC<JsonTreeProps> = ({ data, level = 0 }) => {
           </div>
         );
       })}
+      {pdfTextEntries.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-gray-300">
+          {pdfTextEntries.map(([key, value]) => (
+            <div key={key} className="mt-2">
+              <span className="text-red-500">{key}:</span> 
+              <pre className="text-green-600 whitespace-pre-wrap mt-2 bg-gray-100 p-2 rounded">
+                {JSON.stringify(value, null, 2)}
+              </pre>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
+
+// ... (A többi kód változatlan marad)
 
 interface P2bS3JsonViewerDialogProps {
   isOpen: boolean;

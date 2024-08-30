@@ -665,39 +665,39 @@ const P2bS1CardAnalysePdfReceipts: React.FC<P2bS1CardAnalysePdfReceiptsProps> = 
                 content = typeof file.aiResult === 'string' ? JSON.parse(file.aiResult) : file.aiResult;
             } else {
                 console.log('aiResult hiányzik, megpróbáljuk lekérni a Firestore-ból');
-                const collectionName = getCollectionName(file.type);
-                const docRef = doc(db, collectionName, file.id);
+                const collectionName = 'AI-Invoices';  // Használjuk ezt a gyűjteményt
+                const docRef = doc(db, collectionName, `AI_${file.name.replace('.pdf', '.json')}`);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    content = docSnap.data().aiResult;
-                    console.log('Firestore-ból lekért aiResult:', content);
+                    content = docSnap.data();
+                    console.log('Firestore-ból lekért tartalom:', content);
                     
                     // Frissítsük a lokális state-et is
                     setUploadedFiles(prev => prev.map(f => 
                         f.id === file.id ? { ...f, aiResult: content } : f
                     ));
                 } else {
+                    console.log('Dokumentum nem található:', docRef.path);
                     throw new Error('Nem található aiResult a dokumentumhoz');
                 }
             }
 
             if (!content) {
+                console.log('Üres tartalom:', content);
                 throw new Error('Üres aiResult');
             }
 
-            // Győződj meg róla, hogy a content biztosan objektum
-            const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
-            console.log('Parsed aiResult:', parsedContent);
+            console.log('Végső tartalom:', content);
             
             setSelectedJson({
-                content: JSON.stringify(parsedContent, null, 2),
-                aiFileName: file.aiFileName || `AI_${file.name.replace('.pdf', '.json')}`
+                content: JSON.stringify(content, null, 2),
+                aiFileName: `AI_${file.name.replace('.pdf', '.json')}`
             });
         } catch (error) {
             console.error('Hiba a JSON adatok kezelése során:', error);
             toast({
                 title: "JSON Error",
-                description: "Hiba történt a JSON adatok betöltése során.",
+                description: `Hiba történt a JSON adatok betöltése során: ${error.message}`,
                 variant: "destructive",
             });
         }
